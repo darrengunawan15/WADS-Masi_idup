@@ -1,12 +1,40 @@
-# React + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# Kitchen Serve+
 
-Currently, two official plugins are available:
+Kitchen Serve+ is a web-based customer support platform designed to enhance the digital operations of Cihen Kitchen, an online restaurant specializing in Chinese and Indonesian traditional meals. Currently, Cihen Kitchen manages orders, delivery, and payments via WhatsApp and Instagram. This project aims to improve efficiency by providing a structured, organized, and customer-friendly platform.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+# Sitemap
 
-## Expanding the ESLint configuration
+### Logged Out Users
+- Home Page
+- About Us Page
+- FAQs Page
+- Contact Us Page
+- Login/Register
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Logged In Users
+- Dashboard Page
+- Create Ticket Page
+- Ticket Details Page
+
+### Staff Page
+- Staff Dashboard Page
+- Manage Tickets Page
+
+### Admin Page
+- Admin Dashboard Page
+- Manage Users Page
+- Analytics Page
+
+## Tech Stack
+
+Kitchen Serve+ is built using the following technologies:
+
+**Frontend:**
+  - React.js
+  - Tailwind CSS
+
+**Backend:**
+  - Node.js
+  - Express.js
+  - MongoDB
