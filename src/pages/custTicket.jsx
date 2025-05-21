@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 
-class Ticket extends Component {
+class CustTicket extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -46,13 +46,13 @@ class Ticket extends Component {
       selectedProblem: "",
       complaintText: "",
       uploadedImage: null,
-      currentPage: "ticketList",  // Go back to the ticket list page
+      currentPage: "ticketList",
     });
   };
 
   handleNewTicket = () => {
     this.setState({
-      currentPage: "ticketForm",  // Go to the ticket form page
+      currentPage: "ticketForm",
     });
   };
 
@@ -172,7 +172,7 @@ class Ticket extends Component {
               <button
                 className="px-9 py-3 text-white rounded-2xl font-semibold transition"
                 style={{ backgroundColor: "var(--roseberry)" }}
-                onClick={this.handleGoBack}  // Go back to the ticket list
+                onClick={this.handleGoBack}
               >
                 Back to Tickets
               </button>
@@ -185,7 +185,7 @@ class Ticket extends Component {
             <button
               className="px-9 py-3 text-white rounded-2xl font-semibold transition"
               style={{ backgroundColor: "var(--roseberry)" }}
-              onClick={this.handleGoBack}  // Go back to the ticket list
+              onClick={this.handleGoBack}
             >
               Go Back
             </button>
@@ -205,4 +205,4 @@ class Ticket extends Component {
   }
 }
 
-export default Ticket;
+export default CustTicket;
