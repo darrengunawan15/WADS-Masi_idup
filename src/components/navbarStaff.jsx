@@ -19,7 +19,7 @@ const NavbarStaff = () => {
     };
 
     return (
-        <div className="h-24 bg-white shadow">
+        <div className="h-24 bg-white">
             <div className="flex items-center justify-between max-w-7xl mx-auto w-full h-full px-4 lg:px-8">
                 <div className="flex items-center w-1/6 min-w-[80px]">
                     <img

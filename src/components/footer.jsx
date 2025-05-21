@@ -14,7 +14,7 @@ class Footer extends Component {
                         <p className="text-sm mb-6 text-gray-700">We connect people through creativity and purpose.</p>
                         <div className="flex space-x-4">
                             <a
-                                href="#"
+                                href="https://api.whatsapp.com/send?phone=628881762606"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
@@ -22,7 +22,7 @@ class Footer extends Component {
                                 WhatsApp
                             </a>
                             <a
-                                href="#"
+                                href="https://www.instagram.com/cihen_kitchen/"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded"
