@@ -6,11 +6,11 @@ import Home from './pages/home';
 import CreateAccount from './pages/createAccount';
 import Login from './pages/login';
 import NavbarStaff from './components/navbarStaff';
-import CustTicket from './pages/custTicket';
+import CustTicket from './pages/custTicket'; // 
 import DashboardStaff from './pages/dashboardStaff';
 import NavbarAdmin from './components/navbarAdmin';
 import AdminDashboard from './pages/dashboardAdmin';
-
+import Ticket from './pages/custTicket'; // 
 
 function App() {
   return (
