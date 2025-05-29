@@ -13,6 +13,7 @@ import AdminDashboard from './pages/dashboardAdmin';
 import Ticket from './pages/custTicket';
 import CustomerSupport from './pages/customerSupport';
 import ManageTickets from './pages/manageTickets';
+import TicketDetails from './pages/ticketDetails';
 
 function App() {
   return (
@@ -111,6 +112,17 @@ function App() {
                 <NavbarStaff />
                 <div className="flex-1 transition-all duration-300">
                   <ManageTickets />
+                </div>
+              </div>
+            }
+          />
+          <Route
+            path="/ticket-details/:ticketId"
+            element={
+              <div className="flex h-screen overflow-hidden relative">
+                <NavbarStaff />
+                <div className="flex-1 transition-all duration-300">
+                  <TicketDetails />
                 </div>
               </div>
             }

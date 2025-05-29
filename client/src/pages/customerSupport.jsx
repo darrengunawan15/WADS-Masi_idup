@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const CustomerSupport = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [sidebarWidth, setSidebarWidth] = useState('20');
-    const [selectedChat, setSelectedChat] = useState(null);
+    const [activeChat, setActiveChat] = useState(null);
     const [message, setMessage] = useState('');
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -16,29 +17,27 @@ const CustomerSupport = () => {
         {
             id: 1,
             name: 'John Doe',
-            lastMessage: 'I need help with my order',
+            lastMessage: 'Need help with my order',
             time: '10:30 AM',
             unread: 2,
             avatar: '👨',
             archived: false,
             messages: [
-                { id: 1, sender: 'customer', text: 'Hello, I need help with my order', time: '10:25 AM' },
-                { id: 2, sender: 'staff', text: 'Hi! How can I help you today?', time: '10:26 AM' },
-                { id: 3, sender: 'customer', text: 'I need help with my order', time: '10:30 AM' },
+                { id: 1, sender: 'customer', text: 'Need help with my order', time: '10:30 AM' },
+                { id: 2, sender: 'staff', text: 'How can I help you today?', time: '10:31 AM' },
             ]
         },
         {
             id: 2,
             name: 'Jane Smith',
             lastMessage: 'Received wrong item',
-            time: '9:45 AM',
+            time: 'Yesterday',
             unread: 0,
             avatar: '👩',
             archived: false,
             messages: [
-                { id: 1, sender: 'customer', text: 'Hi, I received the wrong item', time: '9:40 AM' },
-                { id: 2, sender: 'staff', text: 'I apologize for the inconvenience. Could you please provide your order number?', time: '9:42 AM' },
-                { id: 3, sender: 'customer', text: 'Received wrong item', time: '9:45 AM' },
+                { id: 1, sender: 'customer', text: 'Received wrong item', time: 'Yesterday' },
+                { id: 2, sender: 'staff', text: 'I apologize for the inconvenience. Could you please provide your order number?', time: 'Yesterday' },
             ]
         },
         {
@@ -86,6 +85,35 @@ const CustomerSupport = () => {
         setSortedChats(sortChatsByRecent(chats));
     }, [chats]);
 
+    // Handle user parameter from URL
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const username = searchParams.get('user');
+        if (username) {
+            // Find chat with matching username
+            const matchingChat = chats.find(c => c.name.toLowerCase() === username.toLowerCase());
+            
+            if (matchingChat) {
+                // First unarchive if needed and mark as read
+                setChats(prevChats => 
+                    prevChats.map(c => 
+                        c.id === matchingChat.id 
+                            ? { ...c, archived: false, unread: 0 }
+                            : c
+                    )
+                );
+
+                // Force switch to active chats view
+                setShowArchived(false);
+                
+                // Set as active chat after a small delay to ensure view has switched
+                setTimeout(() => {
+                    setActiveChat(matchingChat);
+                }, 0);
+            }
+        }
+    }, [location.search, chats]);
+
     // Toggle sidebar width and navigate
     const handleLogoClick = () => {
         setSidebarWidth('20');
@@ -117,62 +145,33 @@ const CustomerSupport = () => {
 
     useEffect(() => {
         scrollToBottom();
-    }, [selectedChat?.messages]);
+    }, [activeChat?.messages]);
 
     const handleSendMessage = (e) => {
         e.preventDefault();
-        if (!message.trim() || !selectedChat) return;
+        if (!message.trim() || !activeChat) return;
 
         const newMessage = {
-            id: selectedChat.messages.length + 1,
+            id: activeChat.messages.length + 1,
             sender: 'staff',
             text: message,
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
 
-        // Update the selected chat's messages and move it to top
-        const updatedChats = chats.map(chat => {
-            if (chat.id === selectedChat.id) {
-                return {
-                    ...chat,
-                    messages: [...chat.messages, newMessage],
-                    lastMessage: message,
-                    time: newMessage.time,
-                    unread: 0 // Mark as read for active chat
-                };
-            }
-            return chat;
-        });
-
-        setChats(updatedChats);
-        setSelectedChat(updatedChats.find(chat => chat.id === selectedChat.id));
-        setMessage('');
-
-        // Simulate customer response after 2 seconds
-        setTimeout(() => {
-            const customerResponse = {
-                id: selectedChat.messages.length + 2,
-                sender: 'customer',
-                text: 'Thank you for your help!',
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-
-            const updatedChatsWithResponse = chats.map(chat => {
-                if (chat.id === selectedChat.id) {
-                    return {
+        setChats(prevChats => 
+            prevChats.map(chat => 
+                chat.id === activeChat.id 
+                    ? {
                         ...chat,
-                        messages: [...chat.messages, newMessage, customerResponse],
-                        lastMessage: customerResponse.text,
-                        time: customerResponse.time,
-                        unread: 0 // Keep as read for active chat
-                    };
-                }
-                return chat;
-            });
+                        messages: [...chat.messages, newMessage],
+                        lastMessage: message,
+                        time: newMessage.time
+                    }
+                    : chat
+            )
+        );
 
-            setChats(updatedChatsWithResponse);
-            setSelectedChat(updatedChatsWithResponse.find(chat => chat.id === selectedChat.id));
-        }, 2000);
+        setMessage('');
     };
 
     const handleFileUpload = (e) => {
@@ -238,8 +237,8 @@ const CustomerSupport = () => {
                 break;
             case 'delete':
                 setChats(chats.filter(chat => chat.id !== chatId));
-                if (selectedChat?.id === chatId) {
-                    setSelectedChat(null);
+                if (activeChat?.id === chatId) {
+                    setActiveChat(null);
                 }
                 break;
             default:
@@ -281,18 +280,18 @@ const CustomerSupport = () => {
                                         c.id === chat.id ? { ...c, unread: 0 } : c
                                     );
                                     setChats(updatedChats);
-                                    setSelectedChat(updatedChats.find(c => c.id === chat.id));
+                                    setActiveChat(updatedChats.find(c => c.id === chat.id));
                                 }}
                                 onContextMenu={(e) => handleContextMenu(e, chat.id)}
                                 className={`p-4 cursor-pointer transition-all duration-200 ${
-                                    selectedChat?.id === chat.id 
+                                    activeChat?.id === chat.id 
                                         ? 'bg-pink-100 border-l-4 border-[var(--hotpink)]' 
                                         : 'hover:bg-gray-50 border-l-4 border-transparent'
                                 }`}
                             >
                                 <div className="flex items-center space-x-4">
                                     <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl text-white shadow-md ${
-                                        selectedChat?.id === chat.id
+                                        activeChat?.id === chat.id
                                             ? 'bg-[var(--hotpink)]'
                                             : 'bg-gradient-to-br from-[var(--hotpink)] to-[var(--roseberry)]'
                                     }`}>
@@ -301,23 +300,23 @@ const CustomerSupport = () => {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between items-start">
                                             <h3 className={`text-sm font-semibold truncate ${
-                                                selectedChat?.id === chat.id ? 'text-gray-900' : 'text-gray-900'
+                                                activeChat?.id === chat.id ? 'text-gray-900' : 'text-gray-900'
                                             }`}>
                                                 {chat.name}
                                             </h3>
                                             <span className={`text-xs ${
-                                                selectedChat?.id === chat.id ? 'text-gray-600' : 'text-gray-500'
+                                                activeChat?.id === chat.id ? 'text-gray-600' : 'text-gray-500'
                                             }`}>
                                                 {chat.time}
                                             </span>
                                         </div>
                                         <p className={`text-sm truncate ${
-                                            selectedChat?.id === chat.id ? 'text-gray-700' : 'text-gray-500'
+                                            activeChat?.id === chat.id ? 'text-gray-700' : 'text-gray-500'
                                         }`}>
                                             {chat.lastMessage}
                                         </p>
                                     </div>
-                                    {chat.unread > 0 && selectedChat?.id !== chat.id && (
+                                    {chat.unread > 0 && activeChat?.id !== chat.id && (
                                         <div className="w-5 h-5 rounded-full bg-[var(--hotpink)] text-white text-xs flex items-center justify-center shadow-sm">
                                             {chat.unread}
                                         </div>
@@ -394,16 +393,16 @@ const CustomerSupport = () => {
 
                 {/* Chat Area */}
                 <div className="flex-1 flex flex-col bg-gray-50">
-                    {selectedChat ? (
+                    {activeChat ? (
                         <>
                             {/* Chat Header */}
                             <div className="px-6 py-4 bg-white border-b shadow-sm flex-shrink-0">
                                 <div className="flex items-center space-x-4">
                                     <div className="w-12 h-12 rounded-full bg-[var(--hotpink)] flex items-center justify-center text-2xl text-white shadow-md">
-                                        {selectedChat.avatar}
+                                        {activeChat.avatar}
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-gray-900">{selectedChat.name}</h3>
+                                        <h3 className="font-semibold text-gray-900">{activeChat.name}</h3>
                                         <p className="text-sm text-gray-500">Online</p>
                                     </div>
                                 </div>
@@ -411,7 +410,7 @@ const CustomerSupport = () => {
 
                             {/* Messages Area */}
                             <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
-                                {selectedChat.messages.map((msg) => (
+                                {activeChat.messages.map((msg) => (
                                     <div
                                         key={msg.id}
                                         className={`flex ${msg.sender === 'staff' ? 'justify-end' : 'justify-start'}`}
