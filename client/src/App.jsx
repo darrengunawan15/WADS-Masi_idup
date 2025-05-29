@@ -10,7 +10,9 @@ import CustTicket from './pages/custTicket';
 import DashboardStaff from './pages/dashboardStaff';
 import NavbarAdmin from './components/navbarAdmin';
 import AdminDashboard from './pages/dashboardAdmin';
-import Ticket from './pages/custTicket'; 
+import Ticket from './pages/custTicket';
+import CustomerSupport from './pages/customerSupport';
+import ManageTickets from './pages/manageTickets';
 
 function App() {
   return (
@@ -24,6 +26,18 @@ function App() {
                 <NavbarStaff />
                 <div className="flex-1 transition-all duration-300">
                   <DashboardStaff />
+                </div>
+              </div>
+            }
+          />
+
+          <Route
+            path="/customer-support"
+            element={
+              <div className="flex h-screen overflow-hidden relative">
+                <NavbarStaff />
+                <div className="flex-1 transition-all duration-300">
+                  <CustomerSupport />
                 </div>
               </div>
             }
@@ -88,6 +102,17 @@ function App() {
                 </main>
                 <Footer />
               </>
+            }
+          />
+          <Route
+            path="/manage-tickets"
+            element={
+              <div className="flex h-screen overflow-hidden relative">
+                <NavbarStaff />
+                <div className="flex-1 transition-all duration-300">
+                  <ManageTickets />
+                </div>
+              </div>
             }
           />
         </Routes>

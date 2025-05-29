@@ -60,10 +60,9 @@ const NavbarStaff = () => {
                         <img
                             src={logo}
                             alt="Logo"
-                            className="h-10 cursor-pointer flex-shrink-0"
-                            onClick={handleLogoClick}
+                            className="h-10 flex-shrink-0"
                         />
-                        <h2 className={`text-[var(--blush)] text-xl font-bold ${textTransitionClass} leading-tight cursor-pointer`} onClick={handleLogoClick}>
+                        <h2 className={`text-[var(--blush)] text-xl font-bold ${textTransitionClass} leading-tight`}>
                             Kitchen<br />Serve+
                         </h2>
                     </div>

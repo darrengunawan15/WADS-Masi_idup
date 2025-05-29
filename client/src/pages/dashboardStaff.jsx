@@ -226,8 +226,13 @@ const DashboardStaff = () => {
                     {/* Manage Tickets Section - Spans 2 columns */}
                     <div className="col-span-2 bg-white p-4 rounded-xl shadow-lg">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-2xl font-semibold text-black">Manage Tickets</h2>
-                            <button className="text-[var(--hotpink)] hover:text-[var(--roseberry)] text-sm font-medium">View More</button>
+                            <h2 className="text-xl font-semibold text-gray-800">Recent Tickets</h2>
+                            <button 
+                                onClick={() => navigate('/manage-tickets')}
+                                className="text-[var(--hotpink)] hover:text-[var(--roseberry)] transition-colors cursor-pointer"
+                            >
+                                View More
+                            </button>
                         </div>
 
                         <div className="overflow-auto">
@@ -265,8 +270,13 @@ const DashboardStaff = () => {
                     {/* Customer Support Section - Takes 1 column */}
                     <div className="bg-white p-4 rounded-xl shadow-lg">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-2xl font-semibold text-black">Live Chats</h2>
-                            <button className="text-[var(--hotpink)] hover:text-[var(--roseberry)] text-sm font-medium">View More</button>
+                            <h2 className="text-xl font-semibold text-gray-800">Live Chats</h2>
+                            <button 
+                                onClick={() => navigate('/customer-support')}
+                                className="text-[var(--hotpink)] hover:text-[var(--roseberry)] transition-colors cursor-pointer"
+                            >
+                                View More
+                            </button>
                         </div>
 
                         <div className="overflow-auto">
