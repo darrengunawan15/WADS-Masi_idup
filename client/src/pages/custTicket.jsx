@@ -1,208 +1,143 @@
-import React, { Component } from "react";
+import React, { useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate, Link } from 'react-router-dom';
+import { getTickets, createTicket, reset } from '../redux/slices/ticketSlice';
+// Assuming you have a Spinner component
+// import Spinner from '../components/Spinner';
 
-class CustTicket extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      selectedProblem: "",
-      complaintText: "",
-      uploadedImage: null,
-      currentPage: "ticketList",
-      tickets: [
-        { ticketId: "#12345", customerId: "C001", username: "john_doe", issue: "Issue Refund", status: "Pending", dateIssued: "2025-04-27" },
-        { ticketId: "#12346", customerId: "C002", username: "jane_smith", issue: "Wrong Order", status: "Resolved", dateIssued: "2025-04-26" },
-        { ticketId: "#12347", customerId: "C003", username: "mike_lee", issue: "Have not received order", status: "Pending", dateIssued: "2025-04-25" }
-      ]
-    };
-  }
+function CustTicket() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  handleSelectProblem = (problem) => {
-    this.setState({ selectedProblem: problem, currentPage: "ticketForm" });
-  };
+  const { tickets, isLoading, isError, message } = useSelector(
+    (state) => state.ticket
+  );
+  const { user } = useSelector((state) => state.auth); // Get user from auth state
 
-  handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    this.setState({ uploadedImage: file });
-  };
+  const [showCreateForm, setShowCreateForm] = useState(false); // State to toggle create form
+  const [newTicketData, setNewTicketData] = useState({
+    subject: '',
+    description: '',
+    category: '', // Assuming category selection is needed
+  });
 
-  handleComplaintChange = (event) => {
-    const text = event.target.value;
-    const words = text.trim().split(/\s+/);
-    if (words.length <= 50) {
-      this.setState({ complaintText: text });
+  useEffect(() => {
+    // Redirect if not logged in
+    if (!user) {
+      navigate('/login');
     }
+
+    if (isError) {
+      console.log(message); // You might want to display this in the UI
+    }
+
+    // Fetch tickets when the component loads and user is available
+    if (user) {
+        dispatch(getTickets());
+    }
+
+    // Clean up on unmount or when dependencies change
+    return () => {
+      dispatch(reset());
+    };
+
+  }, [user, navigate, isError, message, dispatch]); // Add user to dependencies
+
+  const handleCreateFormChange = (e) => {
+    setNewTicketData((prevState) => ({
+      ...prevState,
+      [e.target.name]: e.target.value,
+    }));
   };
 
-  handleSubmit = () => {
-    const { selectedProblem, complaintText, uploadedImage } = this.state;
-    console.log("Problem:", selectedProblem);
-    console.log("Complaint:", complaintText);
-    console.log("Uploaded Image:", uploadedImage);
-    this.setState({ currentPage: "confirmation" });
+  const handleCreateFormSubmit = (e) => {
+    e.preventDefault();
+    dispatch(createTicket(newTicketData));
+    setNewTicketData({ subject: '', description: '', category: '' }); // Reset form
+    setShowCreateForm(false); // Hide form after submission
   };
 
-  handleGoBack = () => {
-    this.setState({
-      selectedProblem: "",
-      complaintText: "",
-      uploadedImage: null,
-      currentPage: "ticketList",
-    });
-  };
+  // if (isLoading) {
+  //   return <Spinner />;
+  // }
 
-  handleNewTicket = () => {
-    this.setState({
-      currentPage: "ticketForm",
-    });
-  };
+  return (
+    <div className='container mx-auto p-4'>
+      <h1 className='text-2xl font-bold mb-4'>My Tickets</h1>
 
-  render() {
-    const { selectedProblem, complaintText, uploadedImage, currentPage, tickets } = this.state;
+      <button
+        onClick={() => setShowCreateForm(!showCreateForm)}
+        className='bg-green-500 text-white px-4 py-2 rounded mb-4'
+      >
+        {showCreateForm ? 'Cancel Create Ticket' : 'Create New Ticket'}
+      </button>
 
-    const problems = ["Issue Refund", "Wrong Order", "Have not received order"];
-
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ backgroundColor: "var(--babypink)" }}>
-        <h1 className="text-white text-7xl font-bold mb-15">My Ticket</h1>
-
-        {currentPage === "ticketList" && (
-          <>
-            <div className="overflow-x-auto rounded-lg shadow-lg mb-8 w-full max-w-4xl">
-              <table className="min-w-full table-auto rounded-lg border-collapse">
-                <thead style={{ backgroundColor: "var(--hotpink)" }}>
-                  <tr>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-white">Ticket Number</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-white">Customer ID</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-white">Username</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-white">Issue</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-white">Status</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-white">Date Issued</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tickets.map((ticket) => (
-                    <tr key={ticket.ticketId} className="border-t bg-white">
-                      <td className="px-6 py-4 text-sm text-gray-700">{ticket.ticketId}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{ticket.customerId}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{ticket.username}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{ticket.issue}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{ticket.status}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{ticket.dateIssued}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex flex-col gap-4 mt-8">
-              <button
-                className="px-7 py-3 text-white rounded-2xl font-semibold transition"
-                style={{ backgroundColor: "var(--roseberry)" }}
-                onClick={this.handleNewTicket}  // Go to the ticket form
-              >
-                Create Ticket
-              </button>
-            </div>
-          </>
-        )}
-
-        {currentPage === "ticketForm" && !selectedProblem && (
-          <div className="p-6 rounded-2xl w-150 shadow-lg" style={{ backgroundColor: "var(--hotpink)" }}>
-            <h3 className="text-white font-bold mb-6 text-xl">Select The Problem</h3>
-            <div className="flex flex-col gap-4">
-              {problems.map((problem) => (
-                <div
-                  key={problem}
-                  onClick={() => this.handleSelectProblem(problem)}
-                  className="p-3 rounded-lg cursor-pointer bg-white h-14 text-gray-400 text-xl hover:border-4 transition"
-                >
-                  {problem}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {currentPage === "ticketForm" && selectedProblem && (
-          <div className="bg-white p-8 rounded-2xl w-full max-w-4xl shadow-lg flex flex-col md:flex-row gap-8">
-            <div className="flex-1 flex flex-col items-center justify-center bg-gray-200 rounded-2xl p-6">
-              {uploadedImage ? (
-                <img
-                  src={URL.createObjectURL(uploadedImage)}
-                  alt="Uploaded Preview"
-                  className="w-40 h-40 object-cover rounded-xl"
-                />
-              ) : (
-                <label className="cursor-pointer flex flex-col items-center">
-                  <img
-                    src="https://cdn-icons-png.flaticon.com/512/1828/1828925.png"
-                    alt="Upload Icon"
-                    className="w-20 h-20 mb-4 opacity-70"
-                  />
-                  <span className="font-semibold text-gray-700">Upload Image</span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    onChange={this.handleImageUpload}
-                  />
-                </label>
-              )}
-            </div>
-
-            <div className="flex-1 rounded-2xl p-6" style={{ backgroundColor: "var(--hotpink)" }}>
-              <h3 className="text-white font-semibold mb-4">
-                Type in your complaints (Max 50 words)
-              </h3>
-              <textarea
-                value={complaintText}
-                onChange={this.handleComplaintChange}
-                placeholder="Type your complaint here..."
-                className="w-full h-48 p-4 rounded-lg resize-none outline-none bg-white"
+      {showCreateForm && (
+        <div className='mb-4 p-4 border rounded'>
+          <h2 className='text-xl font-bold mb-2'>Create New Ticket</h2>
+          <form onSubmit={handleCreateFormSubmit}>
+            <div className='mb-2'>
+              <label className='block text-gray-700'>Subject</label>
+              <input
+                type='text'
+                name='subject'
+                value={newTicketData.subject}
+                onChange={handleCreateFormChange}
+                className='form-input mt-1 block w-full'
+                required
               />
             </div>
-          </div>
-        )}
-
-        {currentPage === "confirmation" && (
-          <div className="bg-white p-8 rounded-2xl w-full max-w-4xl shadow-lg flex flex-col items-center justify-center">
-            <h2 className="text-3xl font-semibold text-gray-700">Your ticket has been submitted!</h2>
-            <p className="text-gray-600 mt-4">We will get back to you as soon as possible.</p>
-
-            <div className="flex flex-col gap-4 mt-8">
-              <button
-                className="px-9 py-3 text-white rounded-2xl font-semibold transition"
-                style={{ backgroundColor: "var(--roseberry)" }}
-                onClick={this.handleGoBack}
-              >
-                Back to Tickets
-              </button>
+            <div className='mb-2'>
+              <label className='block text-gray-700'>Description</label>
+              <textarea
+                name='description'
+                value={newTicketData.description}
+                onChange={handleCreateFormChange}
+                className='form-textarea mt-1 block w-full'
+                required
+              ></textarea>
             </div>
-          </div>
-        )}
+             {/* Category selection - you would populate options from backend categories */}
+             <div className='mb-2'>
+              <label className='block text-gray-700'>Category</label>
+              <select
+                name='category'
+                value={newTicketData.category}
+                onChange={handleCreateFormChange}
+                className='form-select mt-1 block w-full'
+              >
+                <option value=''>Select Category</option>
+                {/* Map over fetched categories here */}
+              </select>
+            </div>
+            <button
+              type='submit'
+              className='bg-blue-500 text-white px-4 py-2 rounded mt-2'
+            >
+              Submit Ticket
+            </button>
+          </form>
+        </div>
+      )}
 
-        {(currentPage === "ticketForm" || currentPage === "confirmation") && (
-          <div className="flex flex-col gap-4 mt-8">
-            <button
-              className="px-9 py-3 text-white rounded-2xl font-semibold transition"
-              style={{ backgroundColor: "var(--roseberry)" }}
-              onClick={this.handleGoBack}
-            >
-              Go Back
-            </button>
-            {selectedProblem && (
-            <button
-              className="px-9 py-3 text-white rounded-2xl font-semibold transition"
-              style={{ backgroundColor: "var(--roseberry)" }}
-              onClick={this.handleSubmit}
-            >
-              Submit
-            </button>
-          )}
-          </div>
-        )}
-      </div>
-    );
-  }
+      <h2 className='text-xl font-bold mb-2'>Open Tickets</h2>
+      {tickets.length > 0 ? (
+        <ul>
+          {tickets.map((ticket) => (
+            <li key={ticket._id} className='border p-3 mb-2 rounded'>
+              {/* Wrap ticket info in a Link */}
+              <Link to={`/tickets/${ticket._id}`} className='block'>
+                <h3 className='text-lg font-semibold'>{ticket.subject}</h3>
+                <p>Status: {ticket.status}</p>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>You have no tickets.</p>
+      )}
+    </div>
+  );
 }
 
 export default CustTicket;

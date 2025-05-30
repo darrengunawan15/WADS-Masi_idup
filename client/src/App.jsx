@@ -14,12 +14,14 @@ import Ticket from './pages/custTicket';
 import CustomerSupport from './pages/customerSupport';
 import ManageTickets from './pages/manageTickets';
 import TicketDetails from './pages/ticketDetails';
+import PrivateRoute from './components/PrivateRoute';
+import BasicLayout from './components/BasicLayout';
 
 function App() {
   return (
     <Router>
-      <div className="flex flex-col min-h-screen">
-        <Routes>
+      <Routes>
+        <Route element={<PrivateRoute allowedRoles={['staff', 'admin']} />}>
           <Route
             path="/dashboard-staff"
             element={
@@ -43,7 +45,9 @@ function App() {
               </div>
             }
           />
+        </Route>
 
+        <Route element={<PrivateRoute allowedRoles={['admin']} />}>
           <Route
             path="/dashboard-admin"
             element={
@@ -55,80 +59,41 @@ function App() {
               </>
             }
           />
+        </Route>
 
-          {/* Normal */}
-          <Route
-            path="/"
-            element={
-              <>
-                <Navbar />
-                <main className="flex-grow">
-                  <Home />
-                </main>
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/create-account"
-            element={
-              <>
-                <Navbar />
-                <main className="flex-grow">
-                  <CreateAccount />
-                </main>
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              <>
-                <Navbar />
-                <main className="flex-grow">
-                  <Login />
-                </main>
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/custticket"
-            element={
-              <>
-                <Navbar />
-                <main className="flex-grow">
-                  <Ticket />
-                </main>
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/manage-tickets"
-            element={
-              <div className="flex h-screen overflow-hidden relative">
-                <NavbarStaff />
-                <div className="flex-1 transition-all duration-300">
-                  <ManageTickets />
-                </div>
-              </div>
-            }
-          />
-          <Route
-            path="/ticket-details/:ticketId"
-            element={
-              <div className="flex h-screen overflow-hidden relative">
-                <NavbarStaff />
-                <div className="flex-1 transition-all duration-300">
-                  <TicketDetails />
-                </div>
-              </div>
-            }
-          />
-        </Routes>
-      </div>
+        <Route element={<PrivateRoute />}>
+           <Route path="/tickets/:ticketId" element={<TicketDetails />} />
+        </Route>
+
+        <Route
+          path="/"
+          element={
+            <BasicLayout>
+              <Home />
+            </BasicLayout>
+          }
+        />
+        <Route
+          path="/create-account"
+          element={
+            <BasicLayout>
+              <CreateAccount />
+            </BasicLayout>
+          }
+        />
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+        <Route
+          path="/custticket"
+          element={
+            <BasicLayout>
+              <CustTicket />
+            </BasicLayout>
+          }
+        />
+      </Routes>
     </Router>
   );
 }
