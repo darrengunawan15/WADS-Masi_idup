@@ -3,17 +3,17 @@ import Navbar from './components/navbar';
 import Footer from './components/footer';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';  
 import Home from './pages/home';
-import CreateAccount from './pages/createAccount';
-import Login from './pages/login';
+import CreateAccount from './pages/authentication/register';
+import Login from './pages/authentication/login';
 import NavbarStaff from './components/navbarStaff';
 import CustTicket from './pages/custTicket'; 
-import DashboardStaff from './pages/dashboardStaff';
+import DashboardStaff from './pages/staff/dashboardStaff';
 import NavbarAdmin from './components/navbarAdmin';
-import AdminDashboard from './pages/dashboardAdmin';
+import AdminDashboard from './pages/admin/dashboardAdmin';
 import Ticket from './pages/custTicket';
-import CustomerSupport from './pages/customerSupport';
-import ManageTickets from './pages/manageTickets';
-import TicketDetails from './pages/ticketDetails';
+import CustomerSupport from './pages/staff/customerSupport';
+import ManageTickets from './pages/staff/manageTickets';
+import TicketDetails from './pages/staff/ticketDetails';
 
 function App() {
   return (
