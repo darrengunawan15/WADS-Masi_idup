@@ -1,64 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { getTickets, reset } from '../../redux/slices/ticketSlice';
+import Spinner from '../../components/Spinner';
+import { format } from 'date-fns';
 
 const ManageTickets = () => {
     const navigate = useNavigate();
     const [selectedStatus, setSelectedStatus] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Mock data for tickets
-    const [tickets] = useState([
-        {
-            id: 'TICK-001',
-            customerId: 'CUST-001',
-            username: 'johndoe',
-            issue: 'Order #12345 Issue',
-            status: 'open',
-            createdAt: '2024-03-15 10:30 AM'
-        },
-        {
-            id: 'TICK-002',
-            customerId: 'CUST-002',
-            username: 'janesmith',
-            issue: 'Payment Refund Request',
-            status: 'in-progress',
-            createdAt: '2024-03-14 02:15 PM'
-        },
-        {
-            id: 'TICK-003',
-            customerId: 'CUST-003',
-            username: 'mikejohnson',
-            issue: 'Delivery Delay',
-            status: 'resolved',
-            createdAt: '2024-03-13 09:00 AM'
-        },
-        {
-            id: 'TICK-004',
-            customerId: 'CUST-004',
-            username: 'sarahwilson',
-            issue: 'Product Quality Issue',
-            status: 'open',
-            createdAt: '2024-03-15 08:45 AM'
+    const dispatch = useDispatch();
+    const { tickets, isLoading, isError, message } = useSelector((state) => state.tickets);
+
+    useEffect(() => {
+        if (isError) {
+            console.log(message); // Handle error, e.g., show a toast
         }
-    ]);
+
+        // Fetch tickets when the component mounts
+        dispatch(getTickets());
+
+        // Clean up on unmount
+        return () => {
+            dispatch(reset());
+        };
+    }, [dispatch, isError, message]);
 
     // Filter tickets based on status and search query
     const filteredTickets = tickets.filter(ticket => {
-        const matchesStatus = selectedStatus === 'all' || ticket.status === selectedStatus;
-        const matchesSearch = ticket.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            ticket.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            ticket.issue.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesStatus && matchesSearch;
+        const matchesStatus = selectedStatus === 'all' ||
+                             (selectedStatus === 'open' && ticket.status === 'open') ||
+                             (selectedStatus === 'in progress' && ticket.status === 'in progress') ||
+                             (selectedStatus === 'closed' && ticket.status === 'closed') ||
+                             (selectedStatus === 'new' && ticket.status === 'new') ||
+                             (selectedStatus === 'pending' && ticket.status === 'pending');
+        const realDataMatchesSearch = ticket._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                      (ticket.user?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                      ticket.subject.toLowerCase().includes(searchQuery.toLowerCase());
+                                     
+        return matchesStatus && realDataMatchesSearch;
     });
 
     // Get status badge color
     const getStatusColor = (status) => {
         switch (status) {
+            case 'new':
+                return 'bg-blue-100 text-blue-800';
             case 'open':
                 return 'bg-red-100 text-red-800';
-            case 'in-progress':
+            case 'in progress':
                 return 'bg-yellow-100 text-yellow-800';
-            case 'resolved':
+            case 'pending':
+                return 'bg-yellow-200 text-yellow-900';
+            case 'closed':
                 return 'bg-green-100 text-green-800';
             default:
                 return 'bg-gray-100 text-gray-800';
@@ -78,6 +73,14 @@ const ManageTickets = () => {
                 return 'bg-gray-100 text-gray-800';
         }
     };
+
+    if (isLoading) {
+        return <Spinner />;
+    }
+
+    if (isError) {
+        return <div className="text-center text-red-500">Error loading tickets: {message}</div>;
+    }
 
     return (
         <div className={`fixed inset-0 bg-gray-50 transition-all duration-300 ml-20`}>
@@ -109,9 +112,11 @@ const ManageTickets = () => {
                                 }}
                             >
                                 <option value="all" className="cursor-pointer">All Status</option>
+                                <option value="new" className="cursor-pointer">New</option>
                                 <option value="open" className="cursor-pointer">Open</option>
-                                <option value="in-progress" className="cursor-pointer">In Progress</option>
-                                <option value="resolved" className="cursor-pointer">Resolved</option>
+                                <option value="in progress" className="cursor-pointer">In Progress</option>
+                                <option value="pending" className="cursor-pointer">Pending</option>
+                                <option value="closed" className="cursor-pointer">Closed</option>
                             </select>
                             <button
                                 onClick={() => navigate('/customer-support')}
@@ -140,20 +145,20 @@ const ManageTickets = () => {
                             </thead>
                             <tbody>
                                 {filteredTickets.map((ticket) => (
-                                    <tr key={ticket.id} className="border-b">
-                                        <td className="px-3 py-2 text-sm truncate">{ticket.id}</td>
-                                        <td className="px-3 py-2 text-sm truncate">{ticket.customerId}</td>
-                                        <td className="px-3 py-2 text-sm truncate">{ticket.username}</td>
-                                        <td className="px-3 py-2 text-sm truncate">{ticket.issue}</td>
+                                    <tr key={ticket._id} className="border-b border-gray-200 hover:bg-gray-100">
+                                        <td className="px-3 py-2 text-sm text-gray-800 truncate">{ticket._id.substring(0, 6)}...</td>
+                                        <td className="px-3 py-2 text-sm text-gray-800 truncate">{ticket.user?._id.substring(0, 6)}...</td>
+                                        <td className="px-3 py-2 text-sm text-gray-800 truncate">{ticket.user?.name || 'N/A'}</td>
+                                        <td className="px-3 py-2 text-sm text-gray-800 truncate">{ticket.subject}</td>
                                         <td className="px-3 py-2 text-sm">
                                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(ticket.status)}`}>
                                                 {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
                                             </span>
                                         </td>
-                                        <td className="px-3 py-2 text-sm truncate">{ticket.createdAt}</td>
+                                        <td className="px-3 py-2 text-sm text-gray-800 truncate">{format(new Date(ticket.createdAt), 'yyyy-MM-dd HH:mm')}</td>
                                         <td className="px-3 py-2 text-sm">
                                             <button 
-                                                onClick={() => navigate(`/ticket-details/${ticket.id}`)}
+                                                onClick={() => navigate(`/ticket-details/${ticket._id}`)}
                                                 className="py-1 px-3 bg-[var(--hotpink)] text-white rounded-md hover:bg-[var(--roseberry)] transition text-sm cursor-pointer"
                                             >
                                                 Resolve

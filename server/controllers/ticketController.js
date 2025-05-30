@@ -88,7 +88,10 @@ const getTickets = async (req, res) => {
   }
 
   try {
-    const tickets = await Ticket.find({})
+    // Filter tickets by assignedTo for staff, allow admin to see all
+    const filter = req.user.role === 'staff' ? { assignedTo: req.user._id } : {};
+
+    const tickets = await Ticket.find(filter)
       .populate('customer', 'name email') // Populate customer details
       .populate('assignedTo', 'name email') // Populate assigned staff/admin details
       .populate('category', 'categoryName'); // Populate category details
@@ -374,4 +377,93 @@ const uploadFileAttachment = async (req, res) => {
   });
 };
 
-module.exports = { createTicket, getTickets, getTicketById, updateTicket, deleteTicket, assignTicket, uploadFileAttachment }; 
+// @desc    Get daily ticket statistics (for charts)
+// @route   GET /api/tickets/stats/daily
+// @access  Staff, Admin
+const getDailyTicketStats = async (req, res) => {
+  // Only staff and admin can view stats
+  if (req.user.role !== 'staff' && req.user.role !== 'admin') {
+    res.status(403).json({ message: `User role ${req.user.role} is not authorized to access this route` });
+    return;
+  }
+
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7); // Get date 7 days ago
+
+    const dailyStats = await Ticket.aggregate([
+      {
+        $match: { // Filter tickets created in the last 7 days
+          createdAt: { $gte: sevenDaysAgo }
+        }
+      },
+      {
+        $group: { // Group by day and count
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { // Sort by date
+          _id: 1
+        }
+      }
+    ]);
+
+    // Optional: Fill in dates with zero counts if no tickets were created on that day
+    // For simplicity, we'll just return the stats for days with tickets for now.
+    // Frontend can handle filling in missing dates with 0.
+
+    res.json(dailyStats); // Respond with the aggregated stats
+  } catch (error) {
+    console.error('Error fetching daily ticket stats:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
+// @desc    Get average response time statistics (for charts)
+// @route   GET /api/tickets/stats/response-time
+// @access  Staff, Admin
+const getAverageResponseTime = async (req, res) => {
+  // Only staff and admin can view stats
+  if (req.user.role !== 'staff' && req.user.role !== 'admin') {
+    res.status(403).json({ message: `User role ${req.user.role} is not authorized to access this route` });
+    return;
+  }
+
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    // Aggregate to calculate response time (time from creation to update) for tickets updated in the last 30 days
+    const responseTimeStats = await Ticket.aggregate([
+      {
+        $match: {
+          updatedAt: { $gte: thirtyDaysAgo },
+          status: { $in: ['in progress', 'closed'] }
+        }
+      },
+      {
+        $addFields: {
+          durationHours: { $divide: [{ $subtract: ["$updatedAt", "$createdAt"] }, 3600000] }
+        }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$updatedAt" } },
+          averageResponseTimeHours: { $avg: "$durationHours" }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]);
+
+    res.json(responseTimeStats);
+  } catch (error) {
+    console.error('Error fetching average response time stats:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
+module.exports = { createTicket, getTickets, getTicketById, updateTicket, deleteTicket, assignTicket, uploadFileAttachment, getDailyTicketStats, getAverageResponseTime }; 

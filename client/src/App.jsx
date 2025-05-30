@@ -14,6 +14,7 @@ import Ticket from './pages/custTicket';
 import CustomerSupport from './pages/staff/customerSupport';
 import ManageTickets from './pages/staff/manageTickets';
 import TicketDetails from './pages/staff/ticketDetails';
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (

@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getTicket, addComment, updateTicket, assignTicket, uploadFile, reset } from '../redux/slices/ticketSlice'; // Import uploadFile
 import { logout } from '../redux/slices/authSlice'; // Import logout action
 // Assuming you have a Spinner component
-// import Spinner from '../components/Spinner';
+import Spinner from '../components/Spinner'; // Uncommented Spinner import
 
 function TicketDetails() {
   const { ticketId } = useParams(); // Get ticket ID from URL
@@ -121,13 +121,13 @@ function TicketDetails() {
 
   // Ensure ticket data is loaded before rendering details
   if (isLoading || !ticket || !ticket._id) {
-      // You might want a better loading indicator
-      return <p>Loading ticket details...</p>;
+      // Use Spinner component
+      return <Spinner />;
   }
 
    // Check if there was an error and display it
    if (isError) {
-       return <p>Error loading ticket: {message}</p>;
+       return <p className='text-red-500'>Error loading ticket: {message}</p>;
    }
 
   return (
@@ -152,7 +152,6 @@ function TicketDetails() {
             <ul>
                 {ticket.comments.map(comment => (
                     comment && comment._id ? (
-                        console.log('Inspecting comment in map:', comment),
                         <li key={comment._id} className='border-b py-2'>
                             <p className='text-gray-800'>{comment.content}</p>
                             <p className='text-sm text-gray-600'>

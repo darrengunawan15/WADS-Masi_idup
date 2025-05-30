@@ -1,18 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import imgplaceholder from '../../assets/img-placeholder.webp'; 
+import { useDispatch, useSelector } from 'react-redux';
+import { login, reset } from '../../redux/slices/authSlice';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+
+    const { user, isLoading, isError, isSuccess, message } = useSelector(
+        (state) => state.auth
+    );
+
+    useEffect(() => {
+        if (isError) {
+            // You might want to display an error message here
+            console.log(message); // Or use a toast notification library
+        }
+
+        if (isSuccess && user) {
+            // Redirect based on user role
+            if (user.role === 'admin') {
+                navigate('/dashboard-admin');
+            } else if (user.role === 'staff') {
+                navigate('/dashboard-staff');
+            } else {
+                navigate('/custticket'); // Redirect customers to their tickets page
+            }
+        }
+
+        dispatch(reset());
+    }, [user, isError, isSuccess, message, navigate, dispatch, reset]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // login logic
-        
-        console.log('Logging in...', { email, password });
+        const userData = {
+            email,
+            password,
+        };
+
+        dispatch(login(userData));
     };
 
     const redirectToCreateAccount = () => {

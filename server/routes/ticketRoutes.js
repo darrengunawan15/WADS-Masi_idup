@@ -1,67 +1,83 @@
 const express = require('express');
 const router = express.Router();
-const { createTicket, getTickets, getTicketById, updateTicket, deleteTicket, assignTicket, uploadFileAttachment } = require('../controllers/ticketController');
+const { createTicket, getTickets, getTicketById, updateTicket, deleteTicket, assignTicket, uploadFileAttachment, getDailyTicketStats, getAverageResponseTime } = require('../controllers/ticketController');
 const { addComment, getComments } = require('../controllers/commentController'); // Import comment controller functions
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { check } = require('express-validator'); // Import check
 
-// Re-route into comment router
+// Add a middleware to log the request body before comment routes are used
+router.use('/:ticketId/comments', (req, res, next) => {
+  console.log('Ticket Routes (before comments) - Request Body:', req.body);
+  next();
+}, require('./commentRoutes'));
+
 /**
  * @swagger
- * /api/tickets/{ticketId}/comments:
- *   parameters:
- *     - in: path
- *       name: ticketId
- *       schema:
- *         type: string
- *       required: true
- *       description: The ticket ID
+ * /api/tickets/stats/daily:
  *   get:
- *     summary: Get all comments for a ticket
- *     tags: [Tickets, Comments]
+ *     summary: Get daily ticket statistics (Staff and Admin only)
+ *     tags: [Tickets, Statistics]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of comments
+ *         description: Daily ticket counts
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/Comment' # Assuming you will define a Comment schema
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     format: date
+ *                     description: Date in YYYY-MM-DD format
+ *                   count:
+ *                     type: integer
+ *                     description: Number of tickets created on this date
  *       401:
  *         description: Not authenticated
- *       404:
- *         description: Ticket not found
- *   post:
- *     summary: Add a comment to a ticket
- *     tags: [Tickets, Comments]
+ *       403:
+ *         description: Not authorized
+ *       500:
+ *         description: Server error
+ */
+router.route('/stats/daily').get(protect, authorize(['staff', 'admin']), getDailyTicketStats);
+
+/**
+ * @swagger
+ * /api/tickets/stats/response-time:
+ *   get:
+ *     summary: Get average response time per day (Staff and Admin only)
+ *     tags: [Tickets, Statistics]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - text
- *             properties:
- *               text:
- *                 type: string
  *     responses:
- *       201:
- *         description: Comment added successfully
- *       400:
- *         description: Invalid input
+ *       200:
+ *         description: Average response time per day (in hours)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     format: date
+ *                     description: Date in YYYY-MM-DD format
+ *                   averageResponseTimeHours:
+ *                     type: number
+ *                     description: Average response time in hours for that day
  *       401:
  *         description: Not authenticated
- *       404:
- *         description: Ticket not found
+ *       403:
+ *         description: Not authorized
+ *       500:
+ *         description: Server error
  */
-// This allows accessing comment routes via /api/tickets/:ticketId/comments
-router.use('/:ticketId/comments', protect, require('./commentRoutes'));
+router.route('/stats/response-time').get(protect, authorize(['staff', 'admin']), getAverageResponseTime);
 
 /**
  * @swagger

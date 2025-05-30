@@ -1,118 +1,51 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { getTickets, getTicket, addComment, reset } from '../../redux/slices/ticketSlice';
+import Spinner from '../../components/Spinner';
+import { format } from 'date-fns'; // Assuming date-fns is needed for comment timestamps
 
 const CustomerSupport = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarWidth, setSidebarWidth] = useState('20');
-    const [activeChat, setActiveChat] = useState(null);
+    const [activeTicketId, setActiveTicketId] = useState(null);
     const [message, setMessage] = useState('');
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const [contextMenu, setContextMenu] = useState({ show: false, x: 0, y: 0, chatId: null });
     const [showArchived, setShowArchived] = useState(false);
 
-    // Mock data for chats
-    const [chats, setChats] = useState([
-        {
-            id: 1,
-            name: 'John Doe',
-            lastMessage: 'Need help with my order',
-            time: '10:30 AM',
-            unread: 2,
-            avatar: '👨',
-            archived: false,
-            messages: [
-                { id: 1, sender: 'customer', text: 'Need help with my order', time: '10:30 AM' },
-                { id: 2, sender: 'staff', text: 'How can I help you today?', time: '10:31 AM' },
-            ]
-        },
-        {
-            id: 2,
-            name: 'Jane Smith',
-            lastMessage: 'Received wrong item',
-            time: 'Yesterday',
-            unread: 0,
-            avatar: '👩',
-            archived: false,
-            messages: [
-                { id: 1, sender: 'customer', text: 'Received wrong item', time: 'Yesterday' },
-                { id: 2, sender: 'staff', text: 'I apologize for the inconvenience. Could you please provide your order number?', time: 'Yesterday' },
-            ]
-        },
-        {
-            id: 3,
-            name: 'Sam Wilson',
-            lastMessage: "Can't log into my account",
-            time: 'Yesterday',
-            unread: 1,
-            avatar: '👨',
-            archived: true,
-            messages: [
-                { id: 1, sender: 'customer', text: "I can't log into my account", time: 'Yesterday' },
-                { id: 2, sender: 'staff', text: 'Let me help you with that. Have you tried resetting your password?', time: 'Yesterday' },
-            ]
-        }
-    ]);
+    const dispatch = useDispatch();
+    // Get the list of all tickets and the currently selected ticket details from Redux state
+    const { tickets, ticket: activeTicket, isLoading, isError, message: ticketError } = useSelector((state) => state.tickets);
+    const { user } = useSelector((state) => state.auth); // To identify current user as staff
 
-    // Function to sort chats by most recent message
-    const sortChatsByRecent = (chatList) => {
-        return [...chatList].sort((a, b) => {
-            // Convert time strings to comparable values
-            const getTimeValue = (timeStr) => {
-                if (timeStr === 'Yesterday') return new Date().getTime() - 86400000; // 24 hours ago
-                const [time, period] = timeStr.split(' ');
-                const [hours, minutes] = time.split(':');
-                let hour = parseInt(hours);
-                if (period === 'PM' && hour !== 12) hour += 12;
-                if (period === 'AM' && hour === 12) hour = 0;
-                return new Date().setHours(hour, parseInt(minutes), 0, 0);
-            };
-
-            const timeA = getTimeValue(a.time);
-            const timeB = getTimeValue(b.time);
-            
-            // Sort by time (latest to earliest)
-            return timeB - timeA;
-        });
-    };
-
-    // State for sorted chats
-    const [sortedChats, setSortedChats] = useState(sortChatsByRecent(chats));
-
-    // Update sorted chats whenever chats change
+    // Fetch all tickets when the component mounts
     useEffect(() => {
-        setSortedChats(sortChatsByRecent(chats));
-    }, [chats]);
+        dispatch(getTickets());
+        // Reset ticket state on unmount
+        return () => {
+            dispatch(reset());
+        };
+    }, [dispatch]);
 
+    // Fetch details of the active ticket when activeTicketId changes
+    useEffect(() => {
+        if (activeTicketId) {
+            dispatch(getTicket(activeTicketId));
+        }
+    }, [activeTicketId, dispatch]);
+
+    // Handle initial ticket selection from URL parameter (if any)
     // Handle user parameter from URL
     useEffect(() => {
         const searchParams = new URLSearchParams(location.search);
-        const username = searchParams.get('user');
-        if (username) {
-            // Find chat with matching username
-            const matchingChat = chats.find(c => c.name.toLowerCase() === username.toLowerCase());
-            
-            if (matchingChat) {
-                // First unarchive if needed and mark as read
-                setChats(prevChats => 
-                    prevChats.map(c => 
-                        c.id === matchingChat.id 
-                            ? { ...c, archived: false, unread: 0 }
-                            : c
-                    )
-                );
-
-                // Force switch to active chats view
-                setShowArchived(false);
-                
-                // Set as active chat after a small delay to ensure view has switched
-                setTimeout(() => {
-                    setActiveChat(matchingChat);
-                }, 0);
-            }
+        const ticketIdFromUrl = searchParams.get('ticketId'); // Assuming parameter is now ticketId
+        if (ticketIdFromUrl) {
+            setActiveTicketId(ticketIdFromUrl);
         }
-    }, [location.search, chats]);
+    }, [location.search, tickets]);
 
     // Toggle sidebar width and navigate
     const handleLogoClick = () => {
@@ -145,40 +78,31 @@ const CustomerSupport = () => {
 
     useEffect(() => {
         scrollToBottom();
-    }, [activeChat?.messages]);
+    }, [activeTicket?.comments]);
 
     const handleSendMessage = (e) => {
         e.preventDefault();
-        if (!message.trim() || !activeChat) return;
+        if (!message.trim() || !activeTicketId) return;
 
-        const newMessage = {
-            id: activeChat.messages.length + 1,
-            sender: 'staff',
-            text: message,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        const commentData = {
+            content: message,
+            ticketId: activeTicketId, // Associate comment with the active ticket
         };
 
-        setChats(prevChats => 
-            prevChats.map(chat => 
-                chat.id === activeChat.id 
-                    ? {
-                        ...chat,
-                        messages: [...chat.messages, newMessage],
-                        lastMessage: message,
-                        time: newMessage.time
-                    }
-                    : chat
-            )
-        );
+        dispatch(addComment(commentData));
 
         setMessage('');
     };
 
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
-        if (file) {
-            // Here you would typically upload the file to your backend
-            console.log('Uploading file:', file.name);
+        if (file && activeTicketId) {
+            const formData = new FormData();
+            formData.append('file', file);
+            // Assuming uploadFileAttachment thunk handles the ticketId and file
+            // dispatch(uploadFileAttachment({ ticketId: activeTicketId, fileData: formData }));
+            console.log('File upload initiated for ticket', activeTicketId, ':', file.name);
+            // TODO: Implement actual file upload dispatch
         }
     };
 
@@ -201,7 +125,7 @@ const CustomerSupport = () => {
             show: true,
             x,
             y,
-            chatId
+            ticketId: chatId // Use ticketId instead of chatId
         });
     };
 
@@ -213,42 +137,18 @@ const CustomerSupport = () => {
     }, []);
 
     // Handle context menu actions
-    const handleContextMenuAction = (action, chatId) => {
-        switch (action) {
-            case 'markUnread':
-                setChats(chats.map(chat => 
-                    chat.id === chatId ? { ...chat, unread: chat.unread + 1 } : chat
-                ));
-                break;
-            case 'markRead':
-                setChats(chats.map(chat => 
-                    chat.id === chatId ? { ...chat, unread: 0 } : chat
-                ));
-                break;
-            case 'archive':
-                setChats(chats.map(chat => 
-                    chat.id === chatId ? { ...chat, archived: true } : chat
-                ));
-                break;
-            case 'unarchive':
-                setChats(chats.map(chat => 
-                    chat.id === chatId ? { ...chat, archived: false } : chat
-                ));
-                break;
-            case 'delete':
-                setChats(chats.filter(chat => chat.id !== chatId));
-                if (activeChat?.id === chatId) {
-                    setActiveChat(null);
-                }
-                break;
-            default:
-                break;
-        }
-        setContextMenu({ show: false, x: 0, y: 0, chatId: null });
+    const handleContextMenuAction = (action, ticketId) => {
+        console.log(`Action: ${action} on Ticket ID: ${ticketId}`);
+        // TODO: Implement backend calls for relevant actions (e.g., closing ticket, assigning)
+        // Note: 'markRead/Unread', 'archive/unarchive', 'delete' might not directly map
+        setContextMenu({ show: false, x: 0, y: 0, chatId: null }); // Close menu
     };
 
-    // Filter chats based on archive status
-    const filteredChats = sortedChats.filter(chat => chat.archived === showArchived);
+    // Filter tickets (not chats) based on status (using archived for now, but ideally backend filters)
+    // Note: Our backend does not have an 'archived' field for tickets. 
+    // We will display all fetched tickets for now, ignoring the showArchived state.
+    // To implement archiving, backend changes would be needed.
+    const filteredTickets = tickets; // Use all fetched tickets for now
 
     return (
         <div className={`fixed inset-0 bg-gray-50 transition-all duration-300 ${sidebarWidth === '20' ? 'ml-20' : 'ml-64'}`}>
@@ -260,173 +160,96 @@ const CustomerSupport = () => {
                             <h2 className="text-2xl font-bold text-gray-800">
                                 Messages
                             </h2>
-                            <button
-                                onClick={() => setShowArchived(!showArchived)}
-                                className="w-32 px-4 py-2 text-sm font-medium text-[var(--hotpink)] bg-gray-100 hover:bg-gray-200 rounded-full transition-colors flex items-center justify-center space-x-2 cursor-pointer"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                                </svg>
-                                <span>{showArchived ? 'Active' : 'Archived'}</span>
-                            </button>
+                            {/* Removed Archived button as backend doesn't support archiving */}
                         </div>
                     </div>
                     <div className="flex-1 overflow-y-auto">
-                        {filteredChats.map((chat) => (
+                        {/* Display tickets */}
+                        {filteredTickets.map((ticket) => (
                             <div
-                                key={chat.id}
+                                key={ticket._id}
                                 onClick={() => {
-                                    const updatedChats = chats.map(c => 
-                                        c.id === chat.id ? { ...c, unread: 0 } : c
-                                    );
-                                    setChats(updatedChats);
-                                    setActiveChat(updatedChats.find(c => c.id === chat.id));
+                                    setActiveTicketId(ticket._id);
                                 }}
-                                onContextMenu={(e) => handleContextMenu(e, chat.id)}
                                 className={`p-4 cursor-pointer transition-all duration-200 ${
-                                    activeChat?.id === chat.id 
+                                    activeTicketId === ticket._id 
                                         ? 'bg-pink-100 border-l-4 border-[var(--hotpink)]' 
                                         : 'hover:bg-gray-50 border-l-4 border-transparent'
                                 }`}
                             >
                                 <div className="flex items-center space-x-4">
                                     <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl text-white shadow-md ${
-                                        activeChat?.id === chat.id
+                                        activeTicketId === ticket._id
                                             ? 'bg-[var(--hotpink)]'
                                             : 'bg-gradient-to-br from-[var(--hotpink)] to-[var(--roseberry)]'
                                     }`}>
-                                        {chat.avatar}
+                                        {ticket.user?.name ? ticket.user.name.charAt(0).toUpperCase() : '-'}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between items-start">
                                             <h3 className={`text-sm font-semibold truncate ${
-                                                activeChat?.id === chat.id ? 'text-gray-900' : 'text-gray-900'
+                                                activeTicketId === ticket._id ? 'text-gray-900' : 'text-gray-900'
                                             }`}>
-                                                {chat.name}
+                                                {ticket.user?.name || 'Unknown User'}
                                             </h3>
                                             <span className={`text-xs ${
-                                                activeChat?.id === chat.id ? 'text-gray-600' : 'text-gray-500'
+                                                activeTicketId === ticket._id ? 'text-gray-600' : 'text-gray-500'
                                             }`}>
-                                                {chat.time}
+                                                {ticket.updatedAt ? format(new Date(ticket.updatedAt), 'MMM d, h:mm a') : 'N/A'}
                                             </span>
                                         </div>
                                         <p className={`text-sm truncate ${
-                                            activeChat?.id === chat.id ? 'text-gray-700' : 'text-gray-500'
+                                            activeTicketId === ticket._id ? 'text-gray-700' : 'text-gray-500'
                                         }`}>
-                                            {chat.lastMessage}
+                                            {ticket.subject}
                                         </p>
                                     </div>
-                                    {chat.unread > 0 && activeChat?.id !== chat.id && (
-                                        <div className="w-5 h-5 rounded-full bg-[var(--hotpink)] text-white text-xs flex items-center justify-center shadow-sm">
-                                            {chat.unread}
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                {/* Context Menu */}
-                {contextMenu.show && (
-                    <div 
-                        className="fixed bg-white rounded-lg shadow-lg py-2 z-50 min-w-[200px]"
-                        style={{ 
-                            top: contextMenu.y, 
-                            left: contextMenu.x,
-                            transform: 'none'
-                        }}
-                    >
-                        {!showArchived ? (
-                            <>
-                                <button
-                                    onClick={() => handleContextMenuAction('markUnread', contextMenu.chatId)}
-                                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                    <span>Mark as unread</span>
-                                </button>
-                                <button
-                                    onClick={() => handleContextMenuAction('markRead', contextMenu.chatId)}
-                                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    <span>Mark as read</span>
-                                </button>
-                                <button
-                                    onClick={() => handleContextMenuAction('archive', contextMenu.chatId)}
-                                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                                    </svg>
-                                    <span>Archive chat</span>
-                                </button>
-                            </>
-                        ) : (
-                            <button
-                                onClick={() => handleContextMenuAction('unarchive', contextMenu.chatId)}
-                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                                </svg>
-                                <span>Unarchive chat</span>
-                            </button>
-                        )}
-                        <div className="border-t my-1"></div>
-                        <button
-                            onClick={() => handleContextMenuAction('delete', contextMenu.chatId)}
-                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            <span>Delete chat</span>
-                        </button>
-                    </div>
-                )}
-
                 {/* Chat Area */}
                 <div className="flex-1 flex flex-col bg-gray-50">
-                    {activeChat ? (
+                    {isLoading ? (
+                        <Spinner />
+                    ) : isError ? (
+                        <div className="text-center text-red-500 p-4">Error loading ticket details: {ticketError}</div>
+                    ) : activeTicket ? (
                         <>
                             {/* Chat Header */}
                             <div className="px-6 py-4 bg-white border-b shadow-sm flex-shrink-0">
                                 <div className="flex items-center space-x-4">
                                     <div className="w-12 h-12 rounded-full bg-[var(--hotpink)] flex items-center justify-center text-2xl text-white shadow-md">
-                                        {activeChat.avatar}
+                                        {activeTicket.user?.name ? activeTicket.user.name.charAt(0).toUpperCase() : '-'}
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-gray-900">{activeChat.name}</h3>
-                                        <p className="text-sm text-gray-500">Online</p>
+                                        <h3 className="font-semibold text-gray-900">Ticket: {activeTicket.subject}</h3>
+                                        <p className="text-sm text-gray-500">Customer: {activeTicket.user?.name || 'Unknown'}</p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Messages Area */}
                             <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
-                                {activeChat.messages.map((msg) => (
+                                {activeTicket.comments && activeTicket.comments.map((comment) => (
                                     <div
-                                        key={msg.id}
-                                        className={`flex ${msg.sender === 'staff' ? 'justify-end' : 'justify-start'}`}
+                                        key={comment._id}
+                                        className={`flex ${comment.author?._id === user?._id ? 'justify-end' : 'justify-start'}`}
                                     >
                                         <div
                                             className={`max-w-[70%] rounded-2xl p-4 shadow-sm ${
-                                                msg.sender === 'staff'
+                                                comment.author?._id === user?._id
                                                     ? 'bg-[var(--hotpink)] text-white'
                                                     : 'bg-white text-gray-800'
                                             }`}
                                         >
-                                            <p className="text-sm">{msg.text}</p>
+                                            <p className="text-sm">{comment.content}</p>
                                             <span className={`text-xs mt-1 block ${
-                                                msg.sender === 'staff' ? 'text-white text-opacity-70' : 'text-gray-500'
+                                                comment.author?._id === user?._id ? 'text-white text-opacity-70' : 'text-gray-500'
                                             }`}>
-                                                {msg.time}
+                                                {comment.createdAt ? format(new Date(comment.createdAt), 'MMM d, h:mm a') : 'N/A'}
                                             </span>
                                         </div>
                                     </div>
@@ -434,36 +257,38 @@ const CustomerSupport = () => {
                                 <div ref={messagesEndRef} />
                             </div>
 
-                            {/* Message Input */}
-                            <div className="p-6 bg-white border-t shadow-lg flex-shrink-0">
+                            {/* Message Input Area */}
+                            <div className="flex-shrink-0 bg-white px-6 py-4 border-t">
                                 <form onSubmit={handleSendMessage} className="flex items-center space-x-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="p-2 text-gray-500 hover:text-[var(--hotpink)] transition-colors"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                        </svg>
-                                    </button>
                                     <input
                                         type="file"
                                         ref={fileInputRef}
                                         onChange={handleFileUpload}
                                         className="hidden"
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current.click()}
+                                        className="p-2 text-gray-500 hover:text-[var(--hotpink)] transition-colors"
+                                        title="Attach File"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.414 6.586a2 2 0 000 2.828l6.586 6.586a2 2 0 002.828 0L19 14.828" />
+                                        </svg>
+                                    </button>
                                     <input
                                         type="text"
                                         value={message}
                                         onChange={(e) => setMessage(e.target.value)}
                                         placeholder="Type a message..."
-                                        className="flex-1 p-3 border rounded-full focus:outline-none focus:border-[var(--hotpink)] focus:ring-2 focus:ring-[var(--hotpink)] focus:ring-opacity-20"
+                                        className="flex-1 px-4 py-2 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-[var(--hotpink)] focus:border-transparent"
                                     />
                                     <button
                                         type="submit"
-                                        className="p-3 bg-[var(--hotpink)] text-white rounded-full hover:opacity-90 transition-opacity shadow-md"
+                                        className="p-2 bg-[var(--hotpink)] text-white rounded-full hover:bg-[var(--roseberry)] transition-colors"
+                                        title="Send Message"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                                         </svg>
                                     </button>
@@ -471,16 +296,8 @@ const CustomerSupport = () => {
                             </div>
                         </>
                     ) : (
-                        <div className="flex-1 flex items-center justify-center bg-gray-50">
-                            <div className="text-center text-gray-500">
-                                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-[var(--hotpink)] to-[var(--roseberry)] flex items-center justify-center text-white shadow-lg">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                    </svg>
-                                </div>
-                                <p className="text-lg font-medium">Select a chat to start messaging</p>
-                                <p className="text-sm mt-2">Choose from your active conversations</p>
-                            </div>
+                        <div className="flex-1 flex items-center justify-center text-gray-500">
+                            Select a ticket from the sidebar to view details and messages
                         </div>
                     )}
                 </div>

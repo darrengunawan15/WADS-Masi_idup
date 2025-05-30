@@ -8,6 +8,14 @@ const initialState = {
   isSuccess: false,
   isLoading: false,
   message: '',
+  dailyStats: [], // Add state for daily ticket stats
+  isStatsLoading: false, // Add loading state for stats
+  isStatsError: false, // Add error state for stats
+  statsMessage: '', // Add message for stats errors
+  averageResponseTime: [], // Add state for response time
+  isResponseTimeLoading: false, // Loading state
+  isResponseTimeError: false, // Error state
+  responseTimeMessage: '', // Error message
 };
 
 // Create new ticket (for customers)
@@ -111,10 +119,10 @@ export const updateTicket = createAsyncThunk(
 // Add comment to a ticket
 export const addComment = createAsyncThunk(
     'tickets/addComment',
-    async ({ ticketId, commentData }, thunkAPI) => {
+    async ({ ticketId, content }, thunkAPI) => {
         try {
             const token = thunkAPI.getState().auth.accessToken;
-            return await ticketService.addComment(ticketId, commentData, token);
+            return await ticketService.addComment(ticketId, { content }, token);
         } catch (error) {
             const message =
               (error.response &&
@@ -153,6 +161,44 @@ export const uploadFile = createAsyncThunk(
         try {
             const token = thunkAPI.getState().auth.accessToken;
             return await ticketService.uploadFile(ticketId, fileData, token);
+        } catch (error) {
+            const message =
+              (error.response &&
+                error.response.data &&
+                error.response.data.message) ||
+              error.message ||
+              error.toString();
+            return thunkAPI.rejectWithValue(message);
+        }
+    }
+);
+
+// Get daily ticket statistics
+export const fetchDailyTicketStats = createAsyncThunk(
+    'tickets/fetchDailyStats',
+    async (_, thunkAPI) => {
+        try {
+            const token = thunkAPI.getState().auth.accessToken;
+            return await ticketService.getDailyTicketStats(token);
+        } catch (error) {
+            const message =
+              (error.response &&
+                error.response.data &&
+                error.response.data.message) ||
+              error.message ||
+              error.toString();
+            return thunkAPI.rejectWithValue(message);
+        }
+    }
+);
+
+// Get average response time statistics
+export const fetchAverageResponseTime = createAsyncThunk(
+    'tickets/fetchAverageResponseTime',
+    async (_, thunkAPI) => {
+        try {
+            const token = thunkAPI.getState().auth.accessToken;
+            return await ticketService.getAverageResponseTime(token);
         } catch (error) {
             const message =
               (error.response &&
@@ -259,6 +305,36 @@ export const ticketSlice = createSlice({
                  state.ticket.fileAttachments.push(action.payload);
              }
              // Optionally, update file attachments in the tickets list view if needed (less common)
+        })
+        // Reducers for fetching daily ticket stats
+        .addCase(fetchDailyTicketStats.pending, (state) => {
+          state.isStatsLoading = true;
+          state.isStatsError = false;
+          state.statsMessage = '';
+        })
+        .addCase(fetchDailyTicketStats.fulfilled, (state, action) => {
+          state.isStatsLoading = false;
+          state.dailyStats = action.payload;
+        })
+        .addCase(fetchDailyTicketStats.rejected, (state, action) => {
+          state.isStatsLoading = false;
+          state.isStatsError = true;
+          state.statsMessage = action.payload;
+        })
+        // Reducers for fetching average response time
+        .addCase(fetchAverageResponseTime.pending, (state) => {
+          state.isResponseTimeLoading = true;
+          state.isResponseTimeError = false;
+          state.responseTimeMessage = '';
+        })
+        .addCase(fetchAverageResponseTime.fulfilled, (state, action) => {
+          state.isResponseTimeLoading = false;
+          state.averageResponseTime = action.payload;
+        })
+        .addCase(fetchAverageResponseTime.rejected, (state, action) => {
+          state.isResponseTimeLoading = false;
+          state.isResponseTimeError = true;
+          state.responseTimeMessage = action.payload;
         });
 
   },
