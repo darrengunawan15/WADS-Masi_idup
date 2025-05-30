@@ -10,13 +10,15 @@ import CustTicket from './pages/custTicket'; //
 import DashboardStaff from './pages/dashboardStaff';
 import NavbarAdmin from './components/navbarAdmin';
 import AdminDashboard from './pages/dashboardAdmin';
-import Ticket from './pages/custTicket'; // 
+import TicketDetails from './pages/TicketDetails';
+import PrivateRoute from './components/PrivateRoute';
+import BasicLayout from './components/BasicLayout';
 
 function App() {
   return (
     <Router>
-      <div className="flex flex-col min-h-screen">
-        <Routes>
+      <Routes>
+        <Route element={<PrivateRoute allowedRoles={['staff', 'admin']} />}>
           <Route
             path="/dashboard-staff"
             element={
@@ -28,7 +30,9 @@ function App() {
               </>
             }
           />
+        </Route>
 
+        <Route element={<PrivateRoute allowedRoles={['admin']} />}>
           <Route
             path="/dashboard-admin"
             element={
@@ -40,58 +44,41 @@ function App() {
               </>
             }
           />
+        </Route>
 
-          {/* Normal */}
-          <Route
-            path="/"
-            element={
-              <>
-                <Navbar />
-                <main className="flex-grow">
-                  <Home />
-                </main>
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/create-account"
-            element={
-              <>
-                <Navbar />
-                <main className="flex-grow">
-                  <CreateAccount />
-                </main>
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              <>
-                <Navbar />
-                <main className="flex-grow">
-                  <Login />
-                </main>
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/custticket"
-            element={
-              <>
-                <Navbar />
-                <main className="flex-grow">
-                  <Ticket />
-                </main>
-                <Footer />
-              </>
-            }
-          />
-        </Routes>
-      </div>
+        <Route element={<PrivateRoute />}>
+           <Route path="/tickets/:ticketId" element={<TicketDetails />} />
+        </Route>
+
+        <Route
+          path="/"
+          element={
+            <BasicLayout>
+              <Home />
+            </BasicLayout>
+          }
+        />
+        <Route
+          path="/create-account"
+          element={
+            <BasicLayout>
+              <CreateAccount />
+            </BasicLayout>
+          }
+        />
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+        <Route
+          path="/custticket"
+          element={
+            <BasicLayout>
+              <CustTicket />
+            </BasicLayout>
+          }
+        />
+      </Routes>
     </Router>
   );
 }

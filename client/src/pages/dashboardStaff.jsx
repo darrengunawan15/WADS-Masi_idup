@@ -1,141 +1,90 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate, Link } from 'react-router-dom';
+import { getTickets, reset } from '../redux/slices/ticketSlice';
+// Assuming you have a Spinner component
+// import Spinner from '../components/Spinner';
 
-const DashboardStaff = () => {
-    const navigate = useNavigate();
+function DashboardStaff() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-    const tickets = [
-        { id: 1, customerId: 101, username: 'John Doe', issue: 'Login Issue', status: 'Unsolved', dateIssued: '2025-04-25' },
-        { id: 2, customerId: 102, username: 'Jane Smith', issue: 'Payment Problem', status: 'Resolved', dateIssued: '2025-04-24' },
-        { id: 3, customerId: 103, username: 'Sam Wilson', issue: 'Account Locked', status: 'Unsolved', dateIssued: '2025-04-23' },
-    ];
+  const { tickets, isLoading, isError, message } = useSelector(
+    (state) => state.tickets
+  );
+  const { user } = useSelector((state) => state.auth); // Get user from auth state
 
-    const messages = [
-        { id: 1, username: 'John Doe', message: 'Need help with my order', isNew: true },
-        { id: 2, username: 'Jane Smith', message: 'Received wrong item', isNew: false },
-        { id: 3, username: 'Sam Wilson', message: 'Can’t log into my account', isNew: true },
-    ];
+  useEffect(() => {
+    // Redirect if not logged in or not staff/admin
+    if (!user || (user.role !== 'staff' && user.role !== 'admin')) {
+      navigate('/login'); // Or redirect to an unauthorized page
+    }
 
-    const totalTickets = tickets.length;
-    const unsolvedTickets = tickets.filter(ticket => ticket.status === 'Unsolved').length;
+    if (isError) {
+      console.log(message); // You might want to display this in the UI
+    }
 
-    const totalMessages = messages.length;
-    const newMessages = messages.filter(msg => msg.isNew).length;
+    // Fetch all tickets for staff/admin
+    if (user) {
+        dispatch(getTickets());
+    }
 
-    const handleViewTickets = () => navigate('/manage-tickets');
-    const handleViewMessages = () => navigate('/support-messages'); // Example route
+    // Clean up on unmount or when dependencies change
+    return () => {
+      dispatch(reset());
+    };
+  }, [user, navigate, isError, message, dispatch]);
 
-    return (
-        <main className="flex-grow bg-gray-50">
-            <div className="max-w-7xl mx-auto px-4 py-12 space-y-20">
-                {/* === Manage Tickets Section === */}
-                <section className="space-y-6">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-3xl font-semibold text-black px-16">Manage Tickets</h2>
-                        <div className="flex space-x-4 w-1/2 pr-16">
-                            <div className="flex flex-col items-center bg-white p-6 rounded-2xl shadow-xl w-full">
-                                <h3 className="text-lg font-semibold text-gray-700">Total Tickets</h3>
-                                <span className="text-2xl font-bold text-[var(--hotpink)]">{totalTickets}</span>
-                            </div>
-                            <div className="flex flex-col items-center bg-white p-6 rounded-2xl shadow-xl w-full">
-                                <h3 className="text-lg font-semibold text-gray-700">Unsolved Tickets</h3>
-                                <span className="text-2xl font-bold text-red-500">{unsolvedTickets}</span>
-                            </div>
-                        </div>
-                    </div>
+  // if (isLoading) {
+  //   return <Spinner />;
+  // }
 
-                    <div className="px-6">
-                        <table className="bg-white min-w-full table-auto rounded-lg overflow-hidden border border-gray-300 shadow-xl">
-                            <thead className="bg-[var(--hotpink)] text-white">
-                                <tr>
-                                    <th className="px-4 py-2 text-left">Ticket #</th>
-                                    <th className="px-4 py-2 text-left">Customer ID</th>
-                                    <th className="px-4 py-2 text-left">Username</th>
-                                    <th className="px-4 py-2 text-left">Issue</th>
-                                    <th className="px-4 py-2 text-left">Status</th>
-                                    <th className="px-4 py-2 text-left">Date Issued</th>
-                                    <th className="px-4 py-2 text-left">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {tickets.map((ticket) => (
-                                    <tr key={ticket.id} className="border-b">
-                                        <td className="px-4 py-2">{ticket.id}</td>
-                                        <td className="px-4 py-2">{ticket.customerId}</td>
-                                        <td className="px-4 py-2">{ticket.username}</td>
-                                        <td className="px-4 py-2">{ticket.issue}</td>
-                                        <td className="px-4 py-2">{ticket.status}</td>
-                                        <td className="px-4 py-2">{ticket.dateIssued}</td>
-                                        <td className="px-4 py-2">
-                                            <button className="py-1 px-4 bg-[var(--hotpink)] text-white rounded-md">Resolve</button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+  return (
+    <div className='container mx-auto p-4'>
+      <h1 className='text-2xl font-bold mb-4'>Staff Dashboard</h1>
 
-                        <div className="mt-4 text-center">
-                            <button
-                                onClick={handleViewTickets}
-                                className="py-2 px-6 bg-[var(--blush)] text-white rounded-md text-lg font-semibold hover:bg-[var(--roseberry)] transition-colors"
-                            >
-                                View More
-                            </button>
-                        </div>
-                    </div>
-                </section>
-
-                {/* === Customer Support Section === */}
-                <section className="space-y-6">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-3xl font-semibold text-black px-16">Customer Support</h2>
-                        <div className="flex space-x-4 w-1/2 pr-16">
-                            <div className="flex flex-col items-center bg-white p-6 rounded-2xl shadow-xl w-full">
-                                <h3 className="text-lg font-semibold text-gray-700">Total Messages</h3>
-                                <span className="text-2xl font-bold text-[var(--hotpink)]">{totalMessages}</span>
-                            </div>
-                            <div className="flex flex-col items-center bg-white p-6 rounded-2xl shadow-xl w-full">
-                                <h3 className="text-lg font-semibold text-gray-700">New Messages</h3>
-                                <span className="text-2xl font-bold text-red-500">{newMessages}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="px-6">
-                        <table className="bg-white min-w-full table-auto rounded-lg overflow-hidden border border-gray-300 shadow-xl">
-                            <thead className="bg-[var(--hotpink)] text-white">
-                                <tr>
-                                    <th className="px-4 py-2 text-left">Username</th>
-                                    <th className="px-4 py-2 text-left">Message</th>
-                                    <th className="px-4 py-2 text-left">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {messages.map(msg => (
-                                    <tr key={msg.id} className="border-b">
-                                        <td className="px-4 py-2">{msg.username}</td>
-                                        <td className="px-4 py-2">{msg.message}</td>
-                                        <td className="px-4 py-2">
-                                            <button className="py-1 px-4 bg-[var(--hotpink)] text-white rounded-md">Reply</button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-
-                        <div className="mt-4 text-center">
-                            <button
-                                onClick={handleViewMessages}
-                                className="py-2 px-6 bg-[var(--blush)] text-white rounded-md text-lg font-semibold hover:bg-[var(--roseberry)] transition-colors"
-                            >
-                                View More
-                            </button>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </main>
-    );
-};
+      <h2 className='text-xl font-bold mb-2'>All Tickets</h2>
+      {tickets.length > 0 ? (
+        <div className='overflow-x-auto'>
+          <table className='min-w-full bg-white'>
+            <thead>
+              <tr>
+                <th className='py-2 px-4 border-b'>Ticket ID</th>
+                <th className='py-2 px-4 border-b'>Subject</th>
+                <th className='py-2 px-4 border-b'>Status</th>
+                <th className='py-2 px-4 border-b'>Customer</th>
+                <th className='py-2 px-4 border-b'>Assigned To</th>
+                <th className='py-2 px-4 border-b'>Category</th>
+                {/* Add more headers as needed */}
+                <th className='py-2 px-4 border-b'>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tickets.map((ticket) => (
+                <tr key={ticket._id} className='hover:bg-gray-100'>
+                  <td className='py-2 px-4 border-b'>
+                    <Link to={`/tickets/${ticket._id}`} className='text-blue-500 hover:underline'>
+                      {ticket._id}
+                    </Link>
+                  </td>
+                  <td className='py-2 px-4 border-b'>{ticket.subject}</td>
+                  <td className='py-2 px-4 border-b'>{ticket.status}</td>
+                  <td className='py-2 px-4 border-b'>{ticket.customer ? ticket.customer.name : 'N/A'}</td>
+                  <td className='py-2 px-4 border-b'>{ticket.assignedTo ? ticket.assignedTo.name : 'Unassigned'}</td>
+                  <td className='py-2 px-4 border-b'>{ticket.category ? ticket.category.categoryName : 'N/A'}</td>
+                  <td className='py-2 px-4 border-b'>
+                    <Link to={`/tickets/${ticket._id}`} className='text-blue-500 hover:underline mr-2'>View</Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : ( user && !isLoading &&
+        <p>No tickets found.</p>
+      )}
+    </div>
+  );
+}
 
 export default DashboardStaff;
