@@ -1,59 +1,120 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/react.svg';
 import imgplaceholder from '../assets/img-placeholder.webp';
 
 const NavbarStaff = () => {
     const navigate = useNavigate();
+    const [isCollapsed, setIsCollapsed] = useState(true);
+    const sidebarRef = useRef(null);
 
-    const handleLoginClick = () => {
-        navigate('/login');
-    };
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+                setIsCollapsed(true);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleLogoClick = () => {
-        navigate('/');
+        setIsCollapsed(true);
+        navigate('/dashboard-staff');
     };
 
-    const handleProfileClick = () => {
-        navigate('/profile');
+    const handleDashboardClick = () => {
+        setIsCollapsed(true);
+        navigate('/dashboard-staff');
     };
+
+    const handleTicketsClick = () => {
+        setIsCollapsed(true);
+        navigate('/manage-tickets');
+    };
+
+    const handleSupportClick = () => {
+        setIsCollapsed(true);
+        navigate('/customer-support');
+    };
+
+    const handleSidebarClick = () => {
+        if (isCollapsed) {
+            setIsCollapsed(false);
+        }
+    };
+
+    const textTransitionClass = `transition-all duration-300 ease-in-out whitespace-nowrap ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`;
 
     return (
-        <div className="h-24 bg-white">
-            <div className="flex items-center justify-between max-w-7xl mx-auto w-full h-full px-4 lg:px-8">
-                <div className="flex items-center w-1/6 min-w-[80px]">
-                    <img
-                        src={logo}
-                        alt="Logo"
-                        className="h-10 cursor-pointer"
-                        onClick={handleLogoClick}
-                    />
-                </div>
-
-                <div className="flex flex-col flex-grow items-center">
-                    <div className="flex items-center justify-center h-1/2">
-                        <h2 className="text-[var(--blush)] text-3xl md:text-4xl font-bold">Kitchen Serve+</h2>
-                    </div>
-                    <div className="flex space-x-8 text-[var(--roseberry)] text-lg font-semibold h-1/2 items-center">
-                        <a href="#" className="hover:underline">Dashboard</a>
-                        <a href="#" className="hover:underline">Manage Tickets</a>
-                        <a href="#" className="hover:underline">Customer Support</a>
-                    </div>
-                </div>
-
-                <div className="w-1/6 flex justify-end">
-                    <button
-                        onClick={handleProfileClick}
-                        className="p-2 bg-white border-2 border-gray-300 rounded-full hover:border-[var(--hotpink)] transition-all"
-                    >
+        <div 
+            ref={sidebarRef}
+            className={`h-screen bg-white shadow-lg transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} fixed z-50`}
+            onClick={handleSidebarClick}
+        >
+            <div className="flex flex-col h-full">
+                {/* Logo and Title */}
+                <div className="p-4 flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
                         <img
-                            src={imgplaceholder} 
-                            alt="Profile"
-                            className="w-10 h-10 rounded-full object-cover" 
+                            src={logo}
+                            alt="Logo"
+                            className="h-10 flex-shrink-0"
                         />
-                    </button>
+                        <h2 className={`text-[var(--blush)] text-xl font-bold ${textTransitionClass} leading-tight`}>
+                            Kitchen<br />Serve+
+                        </h2>
+                    </div>
                 </div>
 
+                {/* Navigation Links */}
+                <nav className="flex-1 px-4 py-6">
+                    <ul className="space-y-4">
+                        <li>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDashboardClick();
+                                }}
+                                className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 text-[var(--roseberry)] font-semibold cursor-pointer"
+                            >
+                                <span className="text-xl w-6 flex items-center justify-center flex-shrink-0">📊</span>
+                                <span className={textTransitionClass}>
+                                    Dashboard
+                                </span>
+                            </button>
+                        </li>
+                        <li>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleTicketsClick();
+                                }}
+                                className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 text-[var(--roseberry)] font-semibold cursor-pointer"
+                            >
+                                <span className="text-xl w-6 flex items-center justify-center flex-shrink-0">🎫</span>
+                                <span className={textTransitionClass}>
+                                    Manage Tickets
+                                </span>
+                            </button>
+                        </li>
+                        <li>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSupportClick();
+                                }}
+                                className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 text-[var(--roseberry)] font-semibold cursor-pointer"
+                            >
+                                <span className="text-xl w-6 flex items-center justify-center flex-shrink-0">💬</span>
+                                <span className={textTransitionClass}>
+                                    Customer Support
+                                </span>
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
     );
