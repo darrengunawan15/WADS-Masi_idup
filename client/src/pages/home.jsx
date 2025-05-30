@@ -5,9 +5,9 @@ class Home extends Component {
     render() {
         const ProductCarousel = () => {
             return (
-                <div className="bg-gray-50 py-12 px-4">
-                    <h2 className="text-3xl font-semibold text-center mb-6">Our Products</h2>
-                    <p className="text-lg text-center mb-12">
+                <div className="bg-[#683949] py-12 px-4">
+                    <h2 className="text-3xl font-semibold text-center mb-6 text-white">Our Products</h2>
+                    <p className="text-lg text-center mb-12 text-white">
                         Explore our amazing products that are designed with quality and precision.
                     </p>
 
@@ -24,6 +24,14 @@ class Home extends Component {
                             <img src={imgplaceholder} alt="Product 3" className="w-full h-40 object-cover rounded-lg" />
                             <h3 className="mt-4 text-xl font-semibold">Product 3</h3>
                         </div>
+                        <div className="w-64 bg-white p-4 rounded-lg shadow-lg">
+                            <img src={imgplaceholder} alt="Product 3" className="w-full h-40 object-cover rounded-lg" />
+                            <h3 className="mt-4 text-xl font-semibold">Product 3</h3>
+                        </div>
+                        <div className="w-64 bg-white p-4 rounded-lg shadow-lg">
+                            <img src={imgplaceholder} alt="Product 3" className="w-full h-40 object-cover rounded-lg" />
+                            <h3 className="mt-4 text-xl font-semibold">Product 3</h3>
+                        </div>
                     </div>
                 </div>
             );
@@ -31,8 +39,8 @@ class Home extends Component {
 
         const FAQAccordion = () => {
             return (
-                <div className="bg-gray-100 py-12 px-4">
-                    <h2 className="text-3xl font-semibold text-center mb-6">Frequently Asked Questions</h2>
+                <div className="bg-[#FFC4CE] py-12 px-4">
+                    <h2 className="text-3xl font-semibold text-center mb-6">FAQs</h2>
 
                     <div className="space-y-4">
                         <div className="bg-white rounded-lg shadow-md">
@@ -62,39 +70,81 @@ class Home extends Component {
             );
         };
 
-        const DeveloperCard = ({ imgSrc, name, jobTitle, description, email, socialLinks }) => {
-            return (
-                <div className="bg-white shadow-lg rounded-lg p-6">
-                    <img src={imgplaceholder} alt={name} className="w-24 h-24 rounded-full mx-auto" />
-                    <h3 className="text-xl font-semibold mt-4 text-center">{name}</h3>
-                    <p className="text-lg text-center text-gray-700">{jobTitle}</p>
-                    <p className="text-gray-600 mt-2 text-center">{description}</p>
-                    <p className="mt-2 text-center text-sm text-gray-600">{email}</p>
+        // const DeveloperCard = ({ imgSrc, name, jobTitle, description, email, socialLinks }) => {
+        //     return (
+        //         <div className="bg-white shadow-lg rounded-lg p-6">
+        //             <img src={imgplaceholder} alt={name} className="w-24 h-24 rounded-full mx-auto" />
+        //             <h3 className="text-xl font-semibold mt-4 text-center">{name}</h3>
+        //             <p className="text-lg text-center text-gray-700">{jobTitle}</p>
+        //             <p className="text-gray-600 mt-2 text-center">{description}</p>
+        //             <p className="mt-2 text-center text-sm text-gray-600">{email}</p>
 
-                    <div className="flex justify-center space-x-4 mt-4">
-                        <a href={socialLinks.instagram} className="text-pink-500 hover:text-pink-600">
-                            Instagram
-                        </a>
-                        <a href={socialLinks.linkedin} className="text-blue-600 hover:text-blue-700">
-                            LinkedIn
-                        </a>
-                        <a href={socialLinks.github} className="text-gray-700 hover:text-gray-800">
-                            GitHub
-                        </a>
+        //             <div className="flex justify-center space-x-4 mt-4">
+        //                 <a href={socialLinks.instagram} className="text-pink-500 hover:text-pink-600">
+        //                     Instagram
+        //                 </a>
+        //                 <a href={socialLinks.linkedin} className="text-blue-600 hover:text-blue-700">
+        //                     LinkedIn
+        //                 </a>
+        //                 <a href={socialLinks.github} className="text-gray-700 hover:text-gray-800">
+        //                     GitHub
+        //                 </a>
+        //             </div>
+        //         </div>
+        //     );
+        // };
+
+        const DiscoverUs = () => {
+            return (
+                <div className="bg-[#FFC4CE] py-12 px-4">
+                    {/* Title */}
+                    <div className="flex justify-center mb-12">
+                        <h2 className="text-white text-5xl md:text-6xl font-bold drop-shadow-lg text-center">Kitchen Serve+</h2>
+                    </div>
+        
+                    {/* Top row: Discover Us + placeholder Image */}
+                    <div className="flex flex-col md:flex-row justify-center items-center gap-8 mb-12">
+                        <div className="bg-[#F47CA6] rounded-[40px] p-6 text-white w-full md:w-[895px] md:h-[365px]">
+                            <h2 className="text-3xl md:text-4xl font-bold mb-4">Discover Us</h2>
+                            <p className="text-base leading-7">
+                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi fermentum, libero non pulvinar dapibus, eros lorem fermentum ante, eget posuere justo elit in nunc. Nullam nec tincidunt lacus, nec porta elit. Quisque ut nulla sed nisi gravida ullamcorper.
+                            </p>
+                        </div>
+                        <img
+                            className="rounded-[40px] w-full max-w-[270px] h-auto"
+                            src="https://placehold.co/270x366"
+                            alt="Discover image"
+                        />
+                    </div>
+        
+                    {/* Bottom row: placeholder Image + Contact Us */}
+                    <div className="flex flex-col md:flex-row justify-center items-center gap-8">
+                        <img
+                            className="rounded-[40px] w-full max-w-[270px] h-auto"
+                            src="https://placehold.co/270x366"
+                            alt="Contact image"
+                        />
+                        <div className="bg-white rounded-[40px] p-6 text-black w-full md:w-[895px] md:h-[365px]">
+                            <h2 className="text-3xl md:text-4xl font-bold mb-4">Contact Us</h2>
+                            <p className="text-base leading-7">
+                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi fermentum, libero non pulvinar dapibus, eros lorem fermentum ante, eget posuere justo elit in nunc. Nullam nec tincidunt lacus, nec porta elit. Quisque ut nulla sed nisi gravida ullamcorper.
+                            </p>
+                        </div>
                     </div>
                 </div>
             );
         };
+                
 
         return (
             <main className="flex-grow">
                 <div className="max-w-7xl mx-auto px-4 py-8">
-                    <section className="flex flex-col md:flex-row items-center py-16 px-4 bg-gray-50">
+                    <section className="flex flex-col md:flex-row items-center py-16 px-4 bg-[#FFC4CE]">
                         <div className="md:w-1/2 mb-8 md:mb-0">
-                            <h2 className="text-3xl font-semibold text-[var(--blush)]">
+                            <h2 className="text-3xl font-semibold text-white">
                                 Your Catchy Title Goes Here
                             </h2>
-                            <p className="text-lg mt-4 text-gray-700">
+                            <p className="text-lg mt-4 text-white">
                                 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum.
                             </p>
                         </div>
@@ -113,13 +163,15 @@ class Home extends Component {
                             />
                         </div>
                         <div className="md:w-1/2 md:pl-12 text-lg text-gray-700">
-                            <h3 className="text-2xl font-semibold text-[var(--blush)] mb-4">About Us</h3>
+                            <h3 className="text-2xl font-semibold text-[#683949]">About Us</h3>
+                        
                             <p>
                                 Our company has been creating exceptional solutions that drive success for our clients. We value creativity, dedication, and innovation.
                             </p>
                             <p className="mt-4">
                                 Our team consists of passionate individuals who are always striving to go above and beyond to achieve the best results.
                             </p>
+                        
                         </div>
                     </section>
 
@@ -127,7 +179,9 @@ class Home extends Component {
 
                     <FAQAccordion />
 
-                    <section className="py-12 px-4 bg-gray-50">
+                    <DiscoverUs />
+
+                    {/* <section className="py-12 px-4 bg-gray-50">
                         <h2 className="text-3xl font-semibold text-center mb-6">Meet Our Developers</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                             <DeveloperCard
@@ -155,7 +209,7 @@ class Home extends Component {
                                 }}
                             />
                         </div>
-                    </section>
+                    </section> */}
                 </div>
             </main>
         );
