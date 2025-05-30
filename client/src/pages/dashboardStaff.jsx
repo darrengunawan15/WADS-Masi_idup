@@ -54,11 +54,10 @@ const DashboardStaff = () => {
         return () => observer.disconnect();
     }, []);
 
-    const tickets = [
-        { id: 1, customerId: 101, username: 'John Doe', issue: 'Login Issue', status: 'Unsolved', dateIssued: '2025-04-25' },
-        { id: 2, customerId: 102, username: 'Jane Smith', issue: 'Payment Problem', status: 'Resolved', dateIssued: '2025-04-24' },
-        { id: 3, customerId: 103, username: 'Sam Wilson', issue: 'Account Locked', status: 'Unsolved', dateIssued: '2025-04-23' },
-    ];
+  const { tickets, isLoading, isError, message } = useSelector(
+    (state) => state.tickets
+  );
+  const { user } = useSelector((state) => state.auth); // Get user from auth state
 
     // Add mock data for monthly tickets and status counts
     const thisMonthTickets = 156;
@@ -76,11 +75,14 @@ const DashboardStaff = () => {
         { id: 3, username: 'Sam Wilson', message: "Can't log into my account", isNew: true },
     ];
 
-    const totalTickets = tickets.length;
-    const unsolvedTickets = tickets.filter(ticket => ticket.status === 'Unsolved').length;
+    if (isError) {
+      console.log(message); // You might want to display this in the UI
+    }
 
-    const totalMessages = messages.length;
-    const newMessages = messages.filter(msg => msg.isNew).length;
+    // Fetch all tickets for staff/admin
+    if (user) {
+        dispatch(getTickets());
+    }
 
     const handleViewTickets = () => navigate('/manage-tickets');
     const handleViewMessages = () => navigate('/support-messages');
