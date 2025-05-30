@@ -6,6 +6,47 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
+
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Support Ticket API',
+      version: '1.0.0',
+      description: 'API documentation for the Support Ticket application',
+      contact: {
+        name: 'Your Name',
+        email: 'your.email@example.com'
+      }
+    },
+    servers: [
+      {
+        url: `http://localhost:${process.env.PORT || 5000}`,
+        description: 'Development server'
+      }
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT'
+        }
+      }
+    },
+    security: [
+      {
+        bearerAuth: []
+      }
+    ]
+  },
+  apis: ['./routes/*.js'], // Path to the API routes files
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+
 dotenv.config();
 
 connectDB();
@@ -26,6 +67,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
 // Ticket routes
 app.use('/api/tickets', ticketRoutes);
+
+// Serve Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Error handling middleware
 app.use(notFound);
