@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bar, Pie, Line } from 'react-chartjs-2';
-import DashboardHeader from '../components/DashboardHeader';
+import DashboardHeader from '../../components/DashboardHeader';
 import {
     Chart as ChartJS,
     CategoryScale,
