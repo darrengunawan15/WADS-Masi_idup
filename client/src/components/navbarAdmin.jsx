@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/react.svg';
-import imgplaceholder from '../assets/img-placeholder.webp';
 
 const NavbarAdmin = () => {
     const navigate = useNavigate();
@@ -21,22 +20,27 @@ const NavbarAdmin = () => {
 
     const handleLogoClick = () => {
         setIsCollapsed(true);
-        navigate('/dashboard-staff');
+        navigate('/dashboard-admin');
     };
 
     const handleDashboardClick = () => {
         setIsCollapsed(true);
-        navigate('/dashboard-staff');
+        navigate('/dashboard-admin');
     };
 
-    const handleTicketsClick = () => {
+    const handleAssignTicketsClick = () => {
         setIsCollapsed(true);
-        navigate('/manage-tickets');
+        navigate('/assign-tickets');
     };
 
-    const handleSupportClick = () => {
+    const handleManageStaffClick = () => {
         setIsCollapsed(true);
-        navigate('/customer-support');
+        navigate('/manage-staff');
+    };
+
+    const handleManageUsersClick = () => {
+        setIsCollapsed(true);
+        navigate('/manage-users');
     };
 
     const handleSidebarClick = () => {
@@ -60,7 +64,8 @@ const NavbarAdmin = () => {
                         <img
                             src={logo}
                             alt="Logo"
-                            className="h-10 flex-shrink-0"
+                            className="h-10 flex-shrink-0 cursor-pointer"
+                            onClick={handleLogoClick}
                         />
                         <h2 className={`text-[var(--blush)] text-xl font-bold ${textTransitionClass} leading-tight`}>
                             Kitchen<br />Serve+
@@ -89,13 +94,13 @@ const NavbarAdmin = () => {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleTicketsClick();
+                                    handleAssignTicketsClick();
                                 }}
                                 className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 text-[var(--roseberry)] font-semibold cursor-pointer"
                             >
                                 <span className="text-xl w-6 flex items-center justify-center flex-shrink-0">🎫</span>
                                 <span className={textTransitionClass}>
-                                    Manage Tickets
+                                    Assign Tickets
                                 </span>
                             </button>
                         </li>
@@ -103,13 +108,27 @@ const NavbarAdmin = () => {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleSupportClick();
+                                    handleManageStaffClick();
                                 }}
                                 className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 text-[var(--roseberry)] font-semibold cursor-pointer"
                             >
-                                <span className="text-xl w-6 flex items-center justify-center flex-shrink-0">💬</span>
+                                <span className="text-xl w-6 flex items-center justify-center flex-shrink-0">👥</span>
                                 <span className={textTransitionClass}>
-                                    Customer Support
+                                    Manage Staff
+                                </span>
+                            </button>
+                        </li>
+                        <li>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleManageUsersClick();
+                                }}
+                                className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 text-[var(--roseberry)] font-semibold cursor-pointer"
+                            >
+                                <span className="text-xl w-6 flex items-center justify-center flex-shrink-0">👤</span>
+                                <span className={textTransitionClass}>
+                                    Manage Users
                                 </span>
                             </button>
                         </li>

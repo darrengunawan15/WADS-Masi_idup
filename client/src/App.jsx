@@ -15,12 +15,15 @@ import CustomerSupport from './pages/staff/customerSupport';
 import ManageTickets from './pages/staff/manageTickets';
 import TicketDetails from './pages/staff/ticketDetails';
 import PrivateRoute from './components/PrivateRoute';
+import AssignTickets from './pages/admin/assignTickets';
+import ManageUsers from './pages/admin/manageUsers';
+import ManageStaff from './pages/admin/manageStaff';
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route element={<PrivateRoute allowedRoles={['staff', 'admin']} />}>
+        <Route element={<PrivateRoute allowedRoles={['staff']} />}>
           <Route
             path="/dashboard-staff"
             element={
@@ -54,6 +57,39 @@ function App() {
                 <NavbarAdmin />
                 <main className="flex-grow">
                   <AdminDashboard />
+                </main>
+              </>
+            }
+          />
+          <Route
+            path="/assign-tickets"
+            element={
+              <>
+                <NavbarAdmin />
+                <main className="flex-grow">
+                  <AssignTickets />
+                </main>
+              </>
+            }
+          />
+          <Route
+            path="/manage-users"
+            element={
+              <>
+                <NavbarAdmin />
+                <main className="flex-grow">
+                  <ManageUsers />
+                </main>
+              </>
+            }
+          />
+          <Route
+            path="/manage-staff"
+            element={
+              <>
+                <NavbarAdmin />
+                <main className="flex-grow">
+                  <ManageStaff />
                 </main>
               </>
             }

@@ -409,7 +409,7 @@ const DashboardAdmin = () => {
                                             <td className="px-3 py-2 text-sm">
                                                 <div className="flex items-center gap-2 w-full">
                                                     <select 
-                                                        className="flex-1 px-3 py-1 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hotpink)] bg-white"
+                                                        className="flex-1 px-3 py-1 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hotpink)] bg-white cursor-pointer"
                                                         value={tempStaffSelection[ticket.id] || ''}
                                                         onChange={(e) => handleStaffSelect(ticket.id, e.target.value)}
                                                     >
@@ -423,7 +423,7 @@ const DashboardAdmin = () => {
                                                         disabled={!tempStaffSelection[ticket.id]}
                                                         className={`px-3 py-1 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                                                             tempStaffSelection[ticket.id]
-                                                                ? 'bg-[var(--hotpink)] text-white hover:bg-[var(--roseberry)]'
+                                                                ? 'bg-[var(--hotpink)] text-white hover:bg-[var(--roseberry)] cursor-pointer'
                                                                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                                         }`}
                                                     >
@@ -485,8 +485,9 @@ const DashboardAdmin = () => {
 
                 {/* Confirmation Modal */}
                 {showConfirmModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+                    <div className="fixed inset-0 flex items-center justify-center z-50">
+                        <div className="absolute inset-0 backdrop-blur-sm bg-white/30"></div>
+                        <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl relative z-10">
                             <h3 className="text-lg font-semibold mb-4">Confirm Assignment</h3>
                             <p className="text-gray-600 mb-6">
                                 Are you sure you want to assign Ticket #{selectedTicket?.id} to {staffMembers.find(s => s.id === parseInt(selectedStaff))?.name}?
@@ -494,13 +495,13 @@ const DashboardAdmin = () => {
                             <div className="flex justify-end gap-4">
                                 <button
                                     onClick={() => setShowConfirmModal(false)}
-                                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleConfirmAssignment}
-                                    className="px-4 py-2 bg-[var(--hotpink)] text-white rounded-md hover:bg-[var(--roseberry)] transition-colors"
+                                    className="px-4 py-2 bg-[var(--hotpink)] text-white rounded-md hover:bg-[var(--roseberry)] transition-colors cursor-pointer"
                                 >
                                     Confirm
                                 </button>
