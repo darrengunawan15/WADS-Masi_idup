@@ -1,7 +1,7 @@
 import './App.css';
 import Navbar from './components/navbar';
 import Footer from './components/footer';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';  
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';  
 import Home from './pages/home';
 import CreateAccount from './pages/authentication/register';
 import Login from './pages/authentication/login';
@@ -18,6 +18,10 @@ import PrivateRoute from './components/PrivateRoute';
 import AssignTickets from './pages/admin/assignTickets';
 import ManageUsers from './pages/admin/manageUsers';
 import ManageStaff from './pages/admin/manageStaff';
+import DashboardCustomer from './pages/customer/dashboardCustomer';
+import ChatSupport from './pages/customer/chatSupport';
+import NavbarCustomer from './components/navbarCustomer';
+import MyTickets from './pages/customer/myTickets';
 
 function App() {
   return (
@@ -96,78 +100,107 @@ function App() {
           />
         </Route>
 
-          {/* Normal */}
+        <Route element={<PrivateRoute allowedRoles={['customer']} />}>
           <Route
-            path="/"
+            path="/dashboard-customer"
             element={
-              <>
-                <Navbar />
-                <main className="flex-grow">
-                  <Home />
+              <div className="flex h-screen overflow-hidden relative">
+                <NavbarCustomer />
+                <main className="flex-1 transition-all duration-300">
+                  <DashboardCustomer />
                 </main>
-                <Footer />
-              </>
+              </div>
             }
           />
           <Route
-            path="/create-account"
+            path="/mytickets"
             element={
-              <>
-                <Navbar />
-                <main className="flex-grow">
-                  <CreateAccount />
+              <div className="flex h-screen overflow-hidden relative">
+                <NavbarCustomer />
+                <main className="flex-1 transition-all duration-300">
+                  <MyTickets />
                 </main>
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              <>
-                <Navbar />
-                <main className="flex-grow">
-                  <Login />
-                </main>
-                <Footer />
-              </>
+              </div>
             }
           />
           <Route
             path="/custticket"
             element={
-              <>
-                <Navbar />
-                <main className="flex-grow">
-                  <Ticket />
+              <Navigate to="/mytickets" replace />
+            }
+          />
+          <Route
+            path="/chat-support"
+            element={
+              <div className="flex h-screen overflow-hidden relative">
+                <NavbarCustomer />
+                <main className="flex-1 transition-all duration-300">
+                  <ChatSupport />
                 </main>
-                <Footer />
-              </>
-            }
-          />
-          <Route
-            path="/manage-tickets"
-            element={
-              <div className="flex h-screen overflow-hidden relative">
-                <NavbarStaff />
-                <div className="flex-1 transition-all duration-300">
-                  <ManageTickets />
-                </div>
               </div>
             }
           />
-          <Route
-            path="/ticket-details/:ticketId"
-            element={
-              <div className="flex h-screen overflow-hidden relative">
-                <NavbarStaff />
-                <div className="flex-1 transition-all duration-300">
-                  <TicketDetails />
-                </div>
-              </div>
-            }
-          />
+        </Route>
 
+        {/* Normal */}
+        <Route
+          path="/"
+          element={
+            <>
+              <Navbar />
+              <main className="flex-grow">
+                <Home />
+              </main>
+              <Footer />
+            </>
+          }
+        />
+        <Route
+          path="/create-account"
+          element={
+            <>
+              <Navbar />
+              <main className="flex-grow">
+                <CreateAccount />
+              </main>
+              <Footer />
+            </>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <>
+              <Navbar />
+              <main className="flex-grow">
+                <Login />
+              </main>
+              <Footer />
+            </>
+          }
+        />
+        <Route
+          path="/manage-tickets"
+          element={
+            <div className="flex h-screen overflow-hidden relative">
+              <NavbarStaff />
+              <div className="flex-1 transition-all duration-300">
+                <ManageTickets />
+              </div>
+            </div>
+          }
+        />
+        <Route
+          path="/ticket-details/:ticketId"
+          element={
+            <div className="flex h-screen overflow-hidden relative">
+              <NavbarStaff />
+              <div className="flex-1 transition-all duration-300">
+                <TicketDetails />
+              </div>
+            </div>
+          }
+        />
       </Routes>
     </Router>
   );

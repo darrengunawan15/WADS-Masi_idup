@@ -28,7 +28,7 @@ const Login = () => {
             } else if (user.role === 'staff') {
                 navigate('/dashboard-staff');
             } else {
-                navigate('/custticket'); // Redirect customers to their tickets page
+                navigate('/dashboard-customer'); // Redirect customers to their dashboard
             }
         }
 
