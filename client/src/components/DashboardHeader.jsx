@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { logout } from '../redux/slices/authSlice';
 
 const DashboardHeader = ({ staffName }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const menuRef = useRef(null);
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -28,8 +31,16 @@ const DashboardHeader = ({ staffName }) => {
         setIsMenuOpen(false);
     };
 
-    const confirmLogout = () => {
-        navigate('/');
+    const confirmLogout = async () => {
+        try {
+            await dispatch(logout()).unwrap();
+            localStorage.removeItem('user');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            navigate('/');
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
     };
 
     return (
