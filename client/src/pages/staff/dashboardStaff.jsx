@@ -195,7 +195,8 @@ const DashboardStaff = () => {
                 return { // Return relevant info for display
                     _id: ticket._id,
                     subject: ticket.subject,
-                    customerName: ticket.customer?.name || 'Unknown Customer',
+                    // Use the comment author's name if available, fallback to ticket.customer
+                    customerName: latestComment.author?.name || ticket.customer?.name || 'Unknown Customer',
                     latestCommentContent: latestComment.content,
                     latestCommentCreatedAt: latestComment.createdAt,
                 };

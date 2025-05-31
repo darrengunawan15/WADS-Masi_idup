@@ -4,6 +4,9 @@ import { Bar, Pie, Line } from 'react-chartjs-2';
 import DashboardHeader from '../../components/DashboardHeader';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useSelector } from 'react-redux';
+import adminService from '../../services/adminService';
+import Spinner from '../../components/Spinner';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -32,12 +35,17 @@ ChartJS.register(
 const DashboardAdmin = () => {
     const navigate = useNavigate();
     const [sidebarWidth, setSidebarWidth] = useState('20');
-    const [adminName, setAdminName] = useState('Admin User'); // This should come from your auth context/state
     const [selectedTimePeriod, setSelectedTimePeriod] = useState('24h');
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [selectedStaff, setSelectedStaff] = useState('');
     const [tempStaffSelection, setTempStaffSelection] = useState({});
+    const [tickets, setTickets] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [staffMembers, setStaffMembers] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const { user: adminUser } = useSelector((state) => state.auth);
 
     useEffect(() => {
         const handleResize = () => {
@@ -58,68 +66,64 @@ const DashboardAdmin = () => {
         return () => observer.disconnect();
     }, []);
 
-    // Mock data for staff members with response time
-    const staffMembers = [
-        { id: 1, name: 'John Smith', ticketsAssigned: 15, ticketsResolved: 12, avgResponseTime: '2.5 hours' },
-        { id: 2, name: 'Sarah Johnson', ticketsAssigned: 12, ticketsResolved: 10, avgResponseTime: '3.1 hours' },
-        { id: 3, name: 'Mike Brown', ticketsAssigned: 18, ticketsResolved: 15, avgResponseTime: '2.8 hours' },
-        { id: 4, name: 'Lisa Davis', ticketsAssigned: 10, ticketsResolved: 8, avgResponseTime: '3.5 hours' },
-    ];
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const token = localStorage.getItem('accessToken');
+                const [ticketsRes, usersRes, staffRes] = await Promise.all([
+                    adminService.getAllTickets(token),
+                    adminService.getAllUsers(token),
+                    adminService.getStaff(token),
+                ]);
+                setTickets(ticketsRes);
+                setUsers(usersRes);
+                setStaffMembers(staffRes);
+            } catch (err) {
+                setError('Failed to load admin dashboard data');
+                toast.error('Failed to load admin dashboard data');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
-    // Mock data for tickets
-    const tickets = [
-        { id: 1, customerId: 101, username: 'John Doe', issue: 'Login Issue', status: 'Unassigned', dateIssued: '2025-04-25' },
-        { id: 2, customerId: 102, username: 'Jane Smith', issue: 'Payment Problem', status: 'Assigned', assignedTo: 'John Smith', dateIssued: '2025-04-24' },
-        { id: 3, customerId: 103, username: 'Sam Wilson', issue: 'Account Locked', status: 'Unassigned', dateIssued: '2025-04-23' },
-    ];
+    if (isLoading) {
+        return <Spinner />;
+    }
+    if (error) {
+        return <div className="p-6 text-red-500">{error}</div>;
+    }
 
+    // Calculate stats from real data
     const totalTickets = tickets.length;
-    const unassignedTickets = tickets.filter(ticket => ticket.status === 'Unassigned').length;
+    const unassignedTickets = tickets.filter(ticket => !ticket.assignedTo).length;
+    const assignedTickets = tickets.filter(ticket => ticket.assignedTo).length;
+    const inProgressTickets = tickets.filter(ticket => ticket.status === 'in progress').length;
+    const resolvedTickets = tickets.filter(ticket => ticket.status === 'closed').length;
 
-    // Mock data for user registration with different time periods
-    const userRegistrationData = {
-        '24h': {
-            labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
-            data: [5, 8, 12, 15, 10, 7, 4]
-        },
-        '7d': {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-            data: [25, 32, 28, 35, 42, 38, 45]
-        },
-        '14d': {
-            labels: ['Week 1', 'Week 2'],
-            data: [185, 215]
-        },
-        '30d': {
-            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-            data: [185, 215, 198, 245]
-        },
-        '90d': {
-            labels: ['Jan', 'Feb', 'Mar'],
-            data: [450, 520, 480]
-        }
-    };
+    // User stats
+    const activeUsers = users.filter(u => u.status === 'active').length;
+    const inactiveUsers = users.filter(u => u.status === 'inactive').length;
 
-    const getChartData = (period) => ({
-        labels: userRegistrationData[period].labels,
-        datasets: [{
-            label: 'New Users',
-            data: userRegistrationData[period].data,
-            borderColor: 'rgb(75, 192, 192)',
-            tension: 0.1,
-            fill: true,
-            backgroundColor: 'rgba(75, 192, 192, 0.2)'
-        }]
+    // Staff performance
+    const staffPerformance = staffMembers.map(staff => {
+        const assigned = tickets.filter(ticket => ticket.assignedTo && ticket.assignedTo._id === staff._id).length;
+        const resolved = tickets.filter(ticket => ticket.assignedTo && ticket.assignedTo._id === staff._id && ticket.status === 'closed').length;
+        return {
+            ...staff,
+            ticketsAssigned: assigned,
+            ticketsResolved: resolved,
+        };
     });
 
     // Chart Data
     const ticketAssignmentData = {
         labels: ['Assigned', 'Unassigned'],
         datasets: [{
-            data: [
-                tickets.filter(ticket => ticket.status === 'Assigned').length,
-                tickets.filter(ticket => ticket.status === 'Unassigned').length
-            ],
+            data: [assignedTickets, unassignedTickets],
             backgroundColor: [
                 'rgba(75, 192, 192, 0.5)',
                 'rgba(255, 99, 132, 0.5)',
@@ -133,18 +137,18 @@ const DashboardAdmin = () => {
     };
 
     const staffPerformanceData = {
-        labels: staffMembers.map(staff => staff.name),
+        labels: staffPerformance.map(staff => staff.name || staff.username || staff.email),
         datasets: [
             {
                 label: 'Tickets Assigned',
-                data: staffMembers.map(staff => staff.ticketsAssigned),
+                data: staffPerformance.map(staff => staff.ticketsAssigned),
                 backgroundColor: 'rgba(255, 99, 132, 0.5)',
                 borderColor: 'rgb(255, 99, 132)',
                 borderWidth: 1
             },
             {
                 label: 'Tickets Resolved',
-                data: staffMembers.map(staff => staff.ticketsResolved),
+                data: staffPerformance.map(staff => staff.ticketsResolved),
                 backgroundColor: 'rgba(75, 192, 192, 0.5)',
                 borderColor: 'rgb(75, 192, 192)',
                 borderWidth: 1
@@ -155,7 +159,7 @@ const DashboardAdmin = () => {
     const ticketStatusData = {
         labels: ['Assigned', 'Unassigned', 'In Progress', 'Resolved'],
         datasets: [{
-            data: [45, 23, 15, 67],
+            data: [assignedTickets, unassignedTickets, inProgressTickets, resolvedTickets],
             backgroundColor: [
                 'rgba(255, 99, 132, 0.5)',
                 'rgba(54, 162, 235, 0.5)',
@@ -172,27 +176,25 @@ const DashboardAdmin = () => {
         }]
     };
 
-    const responseTimeData = {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    // User registration chart: fallback to user createdAt for now
+    const userRegistrationData = users.reduce((acc, user) => {
+        const date = new Date(user.createdAt).toLocaleDateString();
+        acc[date] = (acc[date] || 0) + 1;
+        return acc;
+    }, {});
+    const registrationLabels = Object.keys(userRegistrationData).sort();
+    const registrationCounts = registrationLabels.map(date => userRegistrationData[date]);
+    const getChartData = () => ({
+        labels: registrationLabels,
         datasets: [{
-            label: 'Average Response Time (hours)',
-            data: [2.5, 3.1, 2.8, 2.3, 2.7, 3.5, 2.9],
+            label: 'New Users',
+            data: registrationCounts,
             borderColor: 'rgb(75, 192, 192)',
-            tension: 0.1
+            tension: 0.1,
+            fill: true,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)'
         }]
-    };
-
-    // Mock data for users
-    const users = [
-        { id: 1, username: 'John Doe', status: 'active' },
-        { id: 2, username: 'Jane Smith', status: 'inactive' },
-        { id: 3, username: 'Sam Wilson', status: 'active' },
-        { id: 4, username: 'Mike Brown', status: 'active' },
-        { id: 5, username: 'Lisa Davis', status: 'inactive' },
-    ];
-
-    const activeUsers = users.filter(user => user.status === 'active').length;
-    const inactiveUsers = users.filter(user => user.status === 'inactive').length;
+    });
 
     const handleStaffSelect = (ticketId, staffId) => {
         setTempStaffSelection(prev => ({
@@ -232,7 +234,8 @@ const DashboardAdmin = () => {
 
     return (
         <div className={`flex-1 bg-gray-50 p-6 h-screen overflow-hidden transition-all duration-300 ${sidebarWidth === '20' ? 'ml-20' : 'ml-64'}`}>
-            <DashboardHeader staffName={adminName} />
+            <ToastContainer />
+            <DashboardHeader staffName={adminUser?.name || 'Admin'} />
 
             <div className="h-full flex flex-col space-y-6 pt-8">
                 {/* Counters Row */}
@@ -336,7 +339,7 @@ const DashboardAdmin = () => {
                             </select>
                         </div>
                         <div className="h-[calc(100%-60px)]">
-                            <Line data={getChartData(selectedTimePeriod)} options={{
+                            <Line data={getChartData()} options={{
                                 responsive: true,
                                 maintainAspectRatio: false,
                                 scales: {
@@ -400,7 +403,7 @@ const DashboardAdmin = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {tickets.filter(ticket => ticket.status === 'Unassigned').map(ticket => (
+                                    {tickets.filter(ticket => !ticket.assignedTo).map(ticket => (
                                         <tr key={ticket.id} className="border-b">
                                             <td className="px-3 py-2 text-sm">{ticket.id}</td>
                                             <td className="px-3 py-2 text-sm">{ticket.username}</td>
@@ -461,9 +464,9 @@ const DashboardAdmin = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {staffMembers.map(staff => (
+                                    {staffPerformance.map(staff => (
                                         <tr key={staff.id} className="border-b">
-                                            <td className="px-3 py-2 text-sm">{staff.name}</td>
+                                            <td className="px-3 py-2 text-sm">{staff.name || staff.username || staff.email}</td>
                                             <td className="px-3 py-2 text-sm">{staff.ticketsAssigned}</td>
                                             <td className="px-3 py-2 text-sm">{staff.ticketsResolved}</td>
                                             <td className="px-3 py-2 text-sm">
@@ -509,9 +512,6 @@ const DashboardAdmin = () => {
                         </div>
                     </div>
                 )}
-
-                {/* Toast Container */}
-                <ToastContainer />
             </div>
         </div>
     );

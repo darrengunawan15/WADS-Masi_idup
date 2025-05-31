@@ -206,20 +206,23 @@ const updateUser = asyncHandler(async (req, res) => {
     throw new Error(errors.array()[0].msg);
   }
 
-  const { name, email, password, role } = req.body;
-
-  const user = await User.findById(req.params.id);
+  console.log('Update request for userId:', req.params.userId);
+  const user = await User.findById(req.params.userId);
+  console.log('User found:', user);
 
   if (!user) {
     res.status(404);
     throw new Error('User not found');
   }
 
+  const { name, email, password, role, status } = req.body;
+
   // Update user fields
   user.name = name || user.name;
   user.email = email || user.email;
   user.password = password ? await user.hashPassword(password) : user.password;
   user.role = role || user.role;
+  user.status = status || user.status;
 
   await user.save();
 
@@ -228,6 +231,7 @@ const updateUser = asyncHandler(async (req, res) => {
     name: user.name,
     email: user.email,
     role: user.role,
+    status: user.status,
   });
 });
 

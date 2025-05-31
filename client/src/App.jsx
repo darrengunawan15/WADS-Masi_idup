@@ -6,11 +6,9 @@ import Home from './pages/home';
 import CreateAccount from './pages/authentication/register';
 import Login from './pages/authentication/login';
 import NavbarStaff from './components/navbarStaff';
-import CustTicket from './pages/custTicket'; 
 import DashboardStaff from './pages/staff/dashboardStaff';
 import NavbarAdmin from './components/navbarAdmin';
 import AdminDashboard from './pages/admin/dashboardAdmin';
-import Ticket from './pages/custTicket';
 import CustomerSupport from './pages/staff/customerSupport';
 import ManageTickets from './pages/staff/manageTickets';
 import TicketDetails from './pages/staff/ticketDetails';
@@ -121,12 +119,6 @@ function App() {
                   <MyTickets />
                 </main>
               </div>
-            }
-          />
-          <Route
-            path="/custticket"
-            element={
-              <Navigate to="/mytickets" replace />
             }
           />
           <Route

@@ -3,48 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import NavbarAdmin from '../../components/navbarAdmin';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import adminService from '../../services/adminService';
+import Spinner from '../../components/Spinner';
+import { useSelector } from 'react-redux';
 
 const ManageStaff = () => {
     const navigate = useNavigate();
     const [sidebarWidth, setSidebarWidth] = useState('20');
     const [searchQuery, setSearchQuery] = useState('');
-
-    // Mock data for staff members
-    const [staffMembers, setStaffMembers] = useState([
-        {
-            id: 'STAFF-001',
-            username: 'johnsmith',
-            email: 'john.smith@kitchenserve.com',
-            fullName: 'John Smith',
-            dateJoined: '2024-01-15 09:00 AM',
-            lastLogin: '2024-03-20 02:15 PM',
-            ticketsAssigned: 5,
-            ticketsResolved: 45,
-            performance: 'Excellent'
-        },
-        {
-            id: 'STAFF-002',
-            username: 'sarahjones',
-            email: 'sarah.jones@kitchenserve.com',
-            fullName: 'Sarah Jones',
-            dateJoined: '2024-02-01 10:30 AM',
-            lastLogin: '2024-03-20 09:30 AM',
-            ticketsAssigned: 3,
-            ticketsResolved: 28,
-            performance: 'Good'
-        },
-        {
-            id: 'STAFF-003',
-            username: 'mikebrown',
-            email: 'mike.brown@kitchenserve.com',
-            fullName: 'Mike Brown',
-            dateJoined: '2024-01-20 11:45 AM',
-            lastLogin: '2024-03-18 11:45 AM',
-            ticketsAssigned: 0,
-            ticketsResolved: 15,
-            performance: 'Average'
-        }
-    ]);
+    const [staffMembers, setStaffMembers] = useState([]);
+    const [tickets, setTickets] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const { user: adminUser } = useSelector((state) => state.auth);
 
     useEffect(() => {
         const handleResize = () => {
@@ -65,17 +36,50 @@ const ManageStaff = () => {
         return () => observer.disconnect();
     }, []);
 
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const token = localStorage.getItem('accessToken');
+                const [staffRes, ticketsRes] = await Promise.all([
+                    adminService.getStaff(token),
+                    adminService.getAllTickets(token),
+                ]);
+                setStaffMembers(staffRes);
+                setTickets(ticketsRes);
+            } catch (err) {
+                setError('Failed to load staff data');
+                toast.error('Failed to load staff data');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
     // Filter staff based on search query
     const filteredStaff = staffMembers.filter(staff => {
         return searchQuery === '' || 
-            staff.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            staff.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            staff._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (staff.username || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
             staff.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            staff.fullName.toLowerCase().includes(searchQuery.toLowerCase());
+            (staff.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+    });
+
+    // Calculate ticket stats for each staff
+    const staffWithStats = filteredStaff.map(staff => {
+        const assigned = tickets.filter(ticket => ticket.assignedTo && ticket.assignedTo._id === staff._id).length;
+        const resolved = tickets.filter(ticket => ticket.assignedTo && ticket.assignedTo._id === staff._id && ticket.status === 'closed').length;
+        return {
+            ...staff,
+            ticketsAssigned: assigned,
+            ticketsResolved: resolved,
+        };
     });
 
     const getPerformanceColor = (performance) => {
-        switch (performance.toLowerCase()) {
+        switch ((performance || '').toLowerCase()) {
             case 'excellent':
                 return 'bg-green-100 text-green-800';
             case 'good':
@@ -88,6 +92,13 @@ const ManageStaff = () => {
                 return 'bg-gray-100 text-gray-800';
         }
     };
+
+    if (isLoading) {
+        return <Spinner />;
+    }
+    if (error) {
+        return <div className="p-6 text-red-500">{error}</div>;
+    }
 
     return (
         <div className="flex">
@@ -123,11 +134,11 @@ const ManageStaff = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredStaff.map((staff) => (
-                                        <tr key={staff.id} className="border-b group relative hover:bg-gray-50">
-                                            <td className="px-3 py-2 text-sm truncate">{staff.id}</td>
-                                            <td className="px-3 py-2 text-sm truncate">{staff.fullName}</td>
-                                            <td className="px-3 py-2 text-sm truncate">{staff.username}</td>
+                                    {staffWithStats.map((staff) => (
+                                        <tr key={staff._id} className="border-b group relative hover:bg-gray-50">
+                                            <td className="px-3 py-2 text-sm truncate">{staff._id}</td>
+                                            <td className="px-3 py-2 text-sm truncate">{staff.name}</td>
+                                            <td className="px-3 py-2 text-sm truncate">{staff.username || staff.name}</td>
                                             <td className="px-3 py-2 text-sm truncate">{staff.email}</td>
                                             <td className="px-3 py-2 text-sm">
                                                 <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${getPerformanceColor(staff.performance)}`}>
@@ -144,7 +155,7 @@ const ManageStaff = () => {
                                     ))}
                                 </tbody>
                             </table>
-                            {filteredStaff.length === 0 && (
+                            {staffWithStats.length === 0 && (
                                 <div className="text-center py-8 text-gray-500">
                                     No staff members found matching your search criteria
                                 </div>

@@ -36,7 +36,7 @@ const ManageTickets = () => {
                              (selectedStatus === 'new' && ticket.status === 'new') ||
                              (selectedStatus === 'pending' && ticket.status === 'pending');
         const realDataMatchesSearch = ticket._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                      (ticket.user?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                      (ticket.customer?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                                       ticket.subject.toLowerCase().includes(searchQuery.toLowerCase());
                                      
         return matchesStatus && realDataMatchesSearch;
@@ -147,8 +147,8 @@ const ManageTickets = () => {
                                 {filteredTickets.map((ticket) => (
                                     <tr key={ticket._id} className="border-b border-gray-200 hover:bg-gray-100">
                                         <td className="px-3 py-2 text-sm text-gray-800 truncate">{ticket._id.substring(0, 6)}...</td>
-                                        <td className="px-3 py-2 text-sm text-gray-800 truncate">{ticket.user?._id.substring(0, 6)}...</td>
-                                        <td className="px-3 py-2 text-sm text-gray-800 truncate">{ticket.user?.name || 'N/A'}</td>
+                                        <td className="px-3 py-2 text-sm text-gray-800 truncate">{ticket.customer?._id?.substring(0, 6)}...</td>
+                                        <td className="px-3 py-2 text-sm text-gray-800 truncate">{ticket.customer?.name || 'N/A'}</td>
                                         <td className="px-3 py-2 text-sm text-gray-800 truncate">{ticket.subject}</td>
                                         <td className="px-3 py-2 text-sm">
                                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(ticket.status)}`}>

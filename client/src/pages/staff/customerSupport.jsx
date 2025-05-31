@@ -47,6 +47,20 @@ const CustomerSupport = () => {
         }
     }, [location.search, tickets]);
 
+    // Auto-select the latest chat session when tickets are loaded and no ticket is selected
+    useEffect(() => {
+        if (!activeTicketId && tickets && tickets.length > 0) {
+            // Find the ticket with the latest updatedAt
+            const latestTicket = tickets.reduce((latest, ticket) => {
+                if (!latest) return ticket;
+                return new Date(ticket.updatedAt) > new Date(latest.updatedAt) ? ticket : latest;
+            }, null);
+            if (latestTicket) {
+                setActiveTicketId(latestTicket._id);
+            }
+        }
+    }, [tickets, activeTicketId]);
+
     // Toggle sidebar width and navigate
     const handleLogoClick = () => {
         setSidebarWidth('20');
@@ -183,14 +197,14 @@ const CustomerSupport = () => {
                                             ? 'bg-[var(--hotpink)]'
                                             : 'bg-gradient-to-br from-[var(--hotpink)] to-[var(--roseberry)]'
                                     }`}>
-                                        {ticket.user?.name ? ticket.user.name.charAt(0).toUpperCase() : '-'}
+                                        {ticket.customer?.name ? ticket.customer.name.charAt(0).toUpperCase() : '-'}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between items-start">
                                             <h3 className={`text-sm font-semibold truncate ${
                                                 activeTicketId === ticket._id ? 'text-gray-900' : 'text-gray-900'
                                             }`}>
-                                                {ticket.user?.name || 'Unknown User'}
+                                                {ticket.customer?.name || 'Unknown User'}
                                             </h3>
                                             <span className={`text-xs ${
                                                 activeTicketId === ticket._id ? 'text-gray-600' : 'text-gray-500'
@@ -222,11 +236,11 @@ const CustomerSupport = () => {
                             <div className="px-6 py-4 bg-white border-b shadow-sm flex-shrink-0">
                                 <div className="flex items-center space-x-4">
                                     <div className="w-12 h-12 rounded-full bg-[var(--hotpink)] flex items-center justify-center text-2xl text-white shadow-md">
-                                        {activeTicket.user?.name ? activeTicket.user.name.charAt(0).toUpperCase() : '-'}
+                                        {activeTicket.customer?.name ? activeTicket.customer.name.charAt(0).toUpperCase() : '-'}
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-gray-900">Ticket: {activeTicket.subject}</h3>
-                                        <p className="text-sm text-gray-500">Customer: {activeTicket.user?.name || 'Unknown'}</p>
+                                        <p className="text-sm text-gray-500">Customer: {activeTicket.customer?.name || 'Unknown'}</p>
                                     </div>
                                 </div>
                             </div>

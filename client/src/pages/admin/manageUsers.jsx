@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import NavbarAdmin from '../../components/navbarAdmin';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import adminService from '../../services/adminService';
+import Spinner from '../../components/Spinner';
+import { useSelector } from 'react-redux';
+import { format } from 'date-fns';
+import Select from 'react-select';
 
 const ManageUsers = () => {
     const navigate = useNavigate();
@@ -13,37 +18,90 @@ const ManageUsers = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [changeType, setChangeType] = useState(''); // 'status' or 'role'
     const [newValue, setNewValue] = useState('');
+    const [users, setUsers] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const { user: adminUser } = useSelector((state) => state.auth);
+    const [pendingRoleChanges, setPendingRoleChanges] = useState({});
+    const [pendingStatusChanges, setPendingStatusChanges] = useState({});
+    const DROPDOWN_MIN_WIDTH = '120px'; // consistent width for both dropdowns
 
-    // Mock data for users
-    const [users, setUsers] = useState([
-        {
-            id: 'USR-001',
-            username: 'johndoe',
-            email: 'john@example.com',
-            role: 'customer',
-            status: 'active',
-            dateCreated: '2024-03-15 10:30 AM',
-            lastLogin: '2024-03-20 02:15 PM'
-        },
-        {
-            id: 'USR-002',
-            username: 'janesmith',
-            email: 'jane@example.com',
-            role: 'staff',
-            status: 'active',
-            dateCreated: '2024-03-14 02:15 PM',
-            lastLogin: '2024-03-20 09:30 AM'
-        },
-        {
-            id: 'USR-003',
-            username: 'mikejohnson',
-            email: 'mike@example.com',
-            role: 'customer',
-            status: 'inactive',
-            dateCreated: '2024-03-13 09:00 AM',
-            lastLogin: '2024-03-18 11:45 AM'
+    const roleOptions = [
+        { value: 'customer', label: 'Customer' },
+        { value: 'staff', label: 'Staff' },
+        { value: 'admin', label: 'Admin' },
+    ];
+
+    const statusOptions = [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+    ];
+
+    const getRoleStyles = (role) => {
+        let bg = '', color = '';
+        switch (role) {
+            case 'admin':
+                bg = '#ede9fe'; color = '#6d28d9'; break; // purple
+            case 'staff':
+                bg = '#dbeafe'; color = '#1e40af'; break; // blue
+            case 'customer':
+                bg = '#f3f4f6'; color = '#374151'; break; // gray
+            default:
+                bg = '#f3f4f6'; color = '#374151'; break;
         }
-    ]);
+        return {
+            control: (provided, state) => ({
+                ...provided,
+                backgroundColor: bg,
+                color: color,
+                borderColor: state.isFocused ? 'var(--hotpink)' : '#d1d5db',
+                boxShadow: state.isFocused ? '0 0 0 2px var(--hotpink)' : undefined,
+                minWidth: DROPDOWN_MIN_WIDTH,
+                minHeight: '32px',
+            }),
+            singleValue: (provided) => ({
+                ...provided,
+                color: color,
+            }),
+            option: (provided, state) => ({
+                ...provided,
+                backgroundColor: state.isSelected ? bg : state.isFocused ? '#f9fafb' : undefined,
+                color: color,
+            }),
+        };
+    };
+
+    const getStatusStyles = (status) => {
+        let bg = '', color = '';
+        switch (status) {
+            case 'active':
+                bg = '#d1fae5'; color = '#065f46'; break; // green
+            case 'inactive':
+                bg = '#fee2e2'; color = '#991b1b'; break; // red
+            default:
+                bg = '#f3f4f6'; color = '#374151'; break; // gray
+        }
+        return {
+            control: (provided, state) => ({
+                ...provided,
+                backgroundColor: bg,
+                color: color,
+                borderColor: state.isFocused ? 'var(--hotpink)' : '#d1d5db',
+                boxShadow: state.isFocused ? '0 0 0 2px var(--hotpink)' : undefined,
+                minWidth: DROPDOWN_MIN_WIDTH,
+                minHeight: '32px',
+            }),
+            singleValue: (provided) => ({
+                ...provided,
+                color: color,
+            }),
+            option: (provided, state) => ({
+                ...provided,
+                backgroundColor: state.isSelected ? bg : state.isFocused ? '#f9fafb' : undefined,
+                color: color,
+            }),
+        };
+    };
 
     useEffect(() => {
         const handleResize = () => {
@@ -64,60 +122,103 @@ const ManageUsers = () => {
         return () => observer.disconnect();
     }, []);
 
+    useEffect(() => {
+        const fetchUsers = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const token = localStorage.getItem('accessToken');
+                const usersRes = await adminService.getAllUsers(token);
+                setUsers(usersRes);
+            } catch (err) {
+                setError('Failed to load users');
+                toast.error('Failed to load users');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchUsers();
+    }, []);
+
     const handleStatusChange = (user, newStatus) => {
-        setSelectedUser(user);
-        setChangeType('status');
-        setNewValue(newStatus);
-        setShowConfirmModal(true);
+        setPendingStatusChanges(prev => ({ ...prev, [user._id]: newStatus }));
     };
 
     const handleRoleChange = (user, newRole) => {
-        setSelectedUser(user);
-        setChangeType('role');
-        setNewValue(newRole);
-        setShowConfirmModal(true);
+        setPendingRoleChanges(prev => ({ ...prev, [user._id]: newRole }));
     };
 
-    const handleConfirmChange = () => {
-        if (!selectedUser) return;
+    const handleRoleConfirm = async (user) => {
+        const newRole = pendingRoleChanges[user._id];
+        if (!newRole || newRole === user.role) return;
+        setIsLoading(true);
+        try {
+            const token = localStorage.getItem('accessToken');
+            console.log('Token being used (role):', token);
+            await adminService.updateUser(user._id, { role: newRole }, token);
+            const usersRes = await adminService.getAllUsers(token);
+            setUsers(usersRes);
+            setPendingRoleChanges(prev => {
+                const updated = { ...prev };
+                delete updated[user._id];
+                return updated;
+            });
+            toast.success('User role updated successfully', {
+                position: 'top-center',
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: 'light',
+                style: { width: '400px', fontSize: '16px' }
+            });
+        } catch (err) {
+            toast.error('Failed to update user role');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-        // Update the user in the state
-        setUsers(prevUsers => 
-            prevUsers.map(user => 
-                user.id === selectedUser.id 
-                    ? { ...user, [changeType]: newValue }
-                    : user
-            )
-        );
-
-        // Show success toast
-        toast.success(`User ${changeType} updated successfully`, {
-            position: "top-center",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "light",
-            style: {
-                width: '400px',
-                fontSize: '16px'
-            }
-        });
-
-        // Close modal and reset state
-        setShowConfirmModal(false);
-        setSelectedUser(null);
-        setChangeType('');
-        setNewValue('');
+    const handleStatusConfirm = async (user) => {
+        const newStatus = pendingStatusChanges[user._id];
+        if (!newStatus || newStatus === user.status) return;
+        setIsLoading(true);
+        try {
+            const token = localStorage.getItem('accessToken');
+            console.log('Token being used (status):', token);
+            await adminService.updateUser(user._id, { status: newStatus }, token);
+            const usersRes = await adminService.getAllUsers(token);
+            setUsers(usersRes);
+            setPendingStatusChanges(prev => {
+                const updated = { ...prev };
+                delete updated[user._id];
+                return updated;
+            });
+            toast.success('User status updated successfully', {
+                position: 'top-center',
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: 'light',
+                style: { width: '400px', fontSize: '16px' }
+            });
+        } catch (err) {
+            toast.error('Failed to update user status');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // Filter users based on search query and status
     const filteredUsers = users.filter(user => {
         const matchesSearch = searchQuery === '' || 
-            user.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            user._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (user.username || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
             user.email.toLowerCase().includes(searchQuery.toLowerCase());
 
         const matchesStatus = selectedStatus === 'all' || user.status === selectedStatus;
@@ -149,6 +250,13 @@ const ManageUsers = () => {
         }
     };
 
+    if (isLoading) {
+        return <Spinner />;
+    }
+    if (error) {
+        return <div className="p-6 text-red-500">{error}</div>;
+    }
+
     return (
         <div className="flex">
             <NavbarAdmin />
@@ -179,114 +287,81 @@ const ManageUsers = () => {
                         </select>
                     </div>
 
-                    {/* Users Table */}
+                    {/* Users Table (Flexbox version) */}
                     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                         <div className="overflow-x-auto">
-                            <table className="w-full table-fixed rounded-lg overflow-hidden border border-gray-300">
-                                <thead className="bg-[var(--hotpink)] text-white sticky top-0">
-                                    <tr>
-                                        <th className="px-3 py-2 text-left text-sm w-[10%]">User ID</th>
-                                        <th className="px-3 py-2 text-left text-sm w-[15%]">Username</th>
-                                        <th className="px-3 py-2 text-left text-sm w-[20%]">Email</th>
-                                        <th className="px-3 py-2 text-left text-sm w-[10%]">Role</th>
-                                        <th className="px-3 py-2 text-left text-sm w-[15%]">Date Created</th>
-                                        <th className="px-3 py-2 text-left text-sm w-[15%]">Last Login</th>
-                                        <th className="px-3 py-2 text-left text-sm w-[15%]">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredUsers.map((user) => (
-                                        <tr key={user.id} className="border-b group relative hover:bg-gray-50">
-                                            <td className="px-3 py-2 text-sm truncate">{user.id}</td>
-                                            <td className="px-3 py-2 text-sm truncate">{user.username}</td>
-                                            <td className="px-3 py-2 text-sm truncate">{user.email}</td>
-                                            <td className="px-3 py-2 text-sm">
-                                                <select
-                                                    className={`px-2 py-1 rounded border focus:outline-none focus:ring-2 focus:ring-[var(--hotpink)] ${getRoleColor(user.role)}`}
-                                                    value={user.role}
-                                                    onChange={(e) => handleRoleChange(user, e.target.value)}
-                                                >
-                                                    <option value="customer">Customer</option>
-                                                    <option value="staff">Staff</option>
-                                                    <option value="admin">Admin</option>
-                                                </select>
-                                            </td>
-                                            <td className="px-3 py-2 text-sm truncate">{user.dateCreated}</td>
-                                            <td className="px-3 py-2 text-sm truncate">{user.lastLogin}</td>
-                                            <td className="px-3 py-2 text-sm">
-                                                <select
-                                                    className={`px-2 py-1 rounded border focus:outline-none focus:ring-2 focus:ring-[var(--hotpink)] ${
-                                                        user.status === 'active' 
-                                                            ? 'bg-green-100 text-green-800 border-green-200' 
-                                                            : 'bg-red-100 text-red-800 border-red-200'
-                                                    }`}
-                                                    value={user.status}
-                                                    onChange={(e) => handleStatusChange(user, e.target.value)}
-                                                >
-                                                    <option value="active">Active</option>
-                                                    <option value="inactive">Inactive</option>
-                                                </select>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            {filteredUsers.length === 0 && (
-                                <div className="text-center py-8 text-gray-500">
-                                    No users found matching your search criteria
+                            <div className="w-full">
+                                <div className="flex bg-[var(--hotpink)] text-white font-semibold text-sm sticky top-0">
+                                    <div className="flex-[1.5] px-3 py-2">User ID</div>
+                                    <div className="flex-[1.5] px-3 py-2">Username</div>
+                                    <div className="flex-[2] px-3 py-2">Email</div>
+                                    <div className="flex-[1.2] px-1 py-2">Role</div>
+                                    <div className="flex-[1.5] px-3 py-2">Date Created</div>
+                                    <div className="flex-[1.5] px-3 py-2">Last Login</div>
+                                    <div className="flex-[1.5] px-3 py-2">Status</div>
                                 </div>
-                            )}
+                                {filteredUsers.map((user) => (
+                                    <div key={user._id} className="flex border-b group relative hover:bg-gray-50 items-center text-sm">
+                                        <div className="flex-[1.5] px-3 py-2 truncate">{user._id}</div>
+                                        <div className="flex-[1.5] px-3 py-2 truncate">{user.username || user.name}</div>
+                                        <div className="flex-[2] px-3 py-2 truncate">{user.email}</div>
+                                        <div className="flex-[1.2] px-0 py-2 whitespace-nowrap w-0">
+                                            <div className="relative w-full flex items-center justify-start">
+                                                <Select
+                                                    classNamePrefix="role-select"
+                                                    value={roleOptions.find(opt => opt.value === (pendingRoleChanges[user._id] || user.role))}
+                                                    onChange={opt => handleRoleChange(user, opt.value)}
+                                                    options={roleOptions}
+                                                    styles={getRoleStyles(pendingRoleChanges[user._id] || user.role)}
+                                                    isSearchable={false}
+                                                    menuPlacement="auto"
+                                                />
+                                                {(pendingRoleChanges[user._id] && pendingRoleChanges[user._id] !== user.role) && (
+                                                    <button
+                                                        type="button"
+                                                        className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-[var(--hotpink)] text-white rounded hover:bg-[var(--roseberry)] text-xs whitespace-nowrap z-10 shadow-lg"
+                                                        onClick={() => handleRoleConfirm(user)}
+                                                    >
+                                                        Confirm
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex-[1.5] px-3 py-2 truncate">{user.createdAt ? format(new Date(user.createdAt), 'yyyy-MM-dd') : ''}</div>
+                                        <div className="flex-[1.5] px-3 py-2 truncate">{user.updatedAt ? format(new Date(user.updatedAt), 'yyyy-MM-dd') : ''}</div>
+                                        <div className="flex-[1.5] px-3 py-2">
+                                            <div className="relative w-full flex items-center justify-start">
+                                                <div className="w-full" style={{ minWidth: DROPDOWN_MIN_WIDTH, maxWidth: DROPDOWN_MIN_WIDTH }}>
+                                                    <Select
+                                                        classNamePrefix="status-select"
+                                                        value={statusOptions.find(opt => opt.value === (pendingStatusChanges[user._id] || user.status))}
+                                                        onChange={opt => handleStatusChange(user, opt.value)}
+                                                        options={statusOptions}
+                                                        styles={getStatusStyles(pendingStatusChanges[user._id] || user.status)}
+                                                        isSearchable={false}
+                                                        menuPlacement="auto"
+                                                    />
+                                                </div>
+                                                {(pendingStatusChanges[user._id] && pendingStatusChanges[user._id] !== user.status) && (
+                                                    <button
+                                                        type="button"
+                                                        className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-[var(--hotpink)] text-white rounded hover:bg-[var(--roseberry)] text-xs whitespace-nowrap z-10 shadow-lg"
+                                                        onClick={() => handleStatusConfirm(user)}
+                                                    >
+                                                        Confirm
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                {/* Confirmation Modal */}
-                {showConfirmModal && selectedUser && (
-                    <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center">
-                        <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full border border-gray-200">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-semibold text-[var(--hotpink)]">Confirm Change</h3>
-                                <button 
-                                    onClick={() => {
-                                        setShowConfirmModal(false);
-                                        setSelectedUser(null);
-                                        setChangeType('');
-                                        setNewValue('');
-                                    }}
-                                    className="text-gray-500 hover:text-gray-700 cursor-pointer"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                            <p className="mb-6">
-                                Are you sure you want to change {selectedUser.username}'s {changeType} to{' '}
-                                <span className="font-medium">{newValue}</span>?
-                            </p>
-                            <div className="flex justify-end gap-4">
-                                <button
-                                    onClick={() => {
-                                        setShowConfirmModal(false);
-                                        setSelectedUser(null);
-                                        setChangeType('');
-                                        setNewValue('');
-                                    }}
-                                    className="px-4 py-2 text-gray-600 hover:text-gray-800 cursor-pointer"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleConfirmChange}
-                                    className="px-4 py-2 bg-[var(--hotpink)] text-white rounded hover:bg-[var(--roseberry)] cursor-pointer"
-                                >
-                                    Confirm Change
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );
 };
 
-export default ManageUsers; 
+export default ManageUsers;

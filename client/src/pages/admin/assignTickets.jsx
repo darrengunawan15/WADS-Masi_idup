@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import NavbarAdmin from '../../components/navbarAdmin';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import adminService from '../../services/adminService';
+import Spinner from '../../components/Spinner';
+import { useSelector } from 'react-redux';
 
 const AssignTickets = () => {
     const navigate = useNavigate();
@@ -15,41 +18,11 @@ const AssignTickets = () => {
     const [selectedStaff, setSelectedStaff] = useState(null);
     const [tempStaffSelection, setTempStaffSelection] = useState({});
     const [assignedTickets, setAssignedTickets] = useState(new Set());
-
-    // Mock data for unassigned tickets
-    const [tickets] = useState([
-        {
-            id: 'TICK-001',
-            customerId: 'CUST-001',
-            username: 'johndoe',
-            issue: 'Order #12345 Issue',
-            status: 'unassigned',
-            createdAt: '2024-03-15 10:30 AM'
-        },
-        {
-            id: 'TICK-002',
-            customerId: 'CUST-002',
-            username: 'janesmith',
-            issue: 'Payment Refund Request',
-            status: 'unassigned',
-            createdAt: '2024-03-14 02:15 PM'
-        },
-        {
-            id: 'TICK-003',
-            customerId: 'CUST-003',
-            username: 'mikejohnson',
-            issue: 'Delivery Delay',
-            status: 'unassigned',
-            createdAt: '2024-03-13 09:00 AM'
-        }
-    ]);
-
-    // Mock data for staff members
-    const [staffMembers] = useState([
-        { id: 1, name: 'John Smith', role: 'Support Staff', ticketsAssigned: 5 },
-        { id: 2, name: 'Sarah Johnson', role: 'Support Staff', ticketsAssigned: 3 },
-        { id: 3, name: 'Mike Brown', role: 'Support Staff', ticketsAssigned: 7 }
-    ]);
+    const [tickets, setTickets] = useState([]);
+    const [staffMembers, setStaffMembers] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const { user: adminUser } = useSelector((state) => state.auth);
 
     useEffect(() => {
         const handleResize = () => {
@@ -70,13 +43,41 @@ const AssignTickets = () => {
         return () => observer.disconnect();
     }, []);
 
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const token = localStorage.getItem('accessToken');
+                const [ticketsRes, staffRes] = await Promise.all([
+                    adminService.getUnassignedTickets(token),
+                    adminService.getStaff(token),
+                ]);
+                setTickets(ticketsRes);
+                setStaffMembers(staffRes);
+                // Pre-select staff for tickets that already have assignedTo
+                const initialStaffSelection = {};
+                ticketsRes.forEach(ticket => {
+                    if (ticket.assignedTo && ticket.assignedTo._id) {
+                        initialStaffSelection[ticket._id] = ticket.assignedTo._id;
+                    }
+                });
+                setTempStaffSelection(initialStaffSelection);
+            } catch (err) {
+                setError('Failed to load tickets or staff');
+                toast.error('Failed to load tickets or staff');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
     const handleStaffSelect = (ticketId, staffId) => {
         setTempStaffSelection(prev => ({
             ...prev,
             [ticketId]: staffId
         }));
-        
-        // If ticket was previously assigned, remove it from assigned tickets
         if (assignedTickets.has(ticketId)) {
             setAssignedTickets(prev => {
                 const newSet = new Set(prev);
@@ -87,40 +88,45 @@ const AssignTickets = () => {
     };
 
     const handleAssignClick = (ticket) => {
-        const staffId = tempStaffSelection[ticket.id];
+        const staffId = tempStaffSelection[ticket._id];
         if (!staffId) return;
-        
         setSelectedTicket(ticket);
         setSelectedStaff(staffId);
         setShowAssignModal(true);
     };
 
-    const handleConfirmAssign = () => {
-        // Here you would make an API call to assign the ticket
-        console.log(`Assigning ticket ${selectedTicket.id} to staff member ${selectedStaff}`);
-        
-        // Add ticket to assigned set
-        setAssignedTickets(prev => new Set([...prev, selectedTicket.id]));
-        
-        // Show success toast
-        toast.success(`Ticket ${selectedTicket.id} has been assigned to ${staffMembers.find(s => s.id === parseInt(selectedStaff))?.name}`, {
-            position: "top-center",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "light",
-            style: {
-                width: '400px',
-                fontSize: '16px'
-            }
-        });
-
-        setShowAssignModal(false);
-        setSelectedTicket(null);
-        setSelectedStaff(null);
+    const handleConfirmAssign = async () => {
+        try {
+            setIsLoading(true);
+            const token = localStorage.getItem('accessToken');
+            await adminService.assignTicket(selectedTicket._id, selectedStaff, token);
+            setAssignedTickets(prev => new Set([...prev, selectedTicket._id]));
+            toast.success(`Ticket ${selectedTicket._id} has been assigned!`, {
+                position: "top-center",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "light",
+                style: {
+                    width: '400px',
+                    fontSize: '16px'
+                }
+            });
+            // Refetch tickets after assignment
+            const token2 = localStorage.getItem('accessToken');
+            const ticketsRes = await adminService.getUnassignedTickets(token2);
+            setTickets(ticketsRes);
+        } catch (err) {
+            toast.error('Failed to assign ticket');
+        } finally {
+            setIsLoading(false);
+            setShowAssignModal(false);
+            setSelectedTicket(null);
+            setSelectedStaff(null);
+        }
     };
 
     const getStatusColor = (status) => {
@@ -139,15 +145,19 @@ const AssignTickets = () => {
     // Filter tickets based on search query and status
     const filteredTickets = tickets.filter(ticket => {
         const matchesSearch = searchQuery === '' || 
-            ticket.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            ticket.customerId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            ticket.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            ticket.issue.toLowerCase().includes(searchQuery.toLowerCase());
-
+            ticket._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (ticket.customer?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            ticket.subject.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = selectedStatus === 'all' || ticket.status === selectedStatus;
-
         return matchesSearch && matchesStatus;
     });
+
+    if (isLoading) {
+        return <Spinner />;
+    }
+    if (error) {
+        return <div className="p-6 text-red-500">{error}</div>;
+    }
 
     return (
         <div className="flex">
@@ -197,10 +207,10 @@ const AssignTickets = () => {
                                 </thead>
                                 <tbody>
                                     {filteredTickets.map((ticket) => (
-                                        <tr key={ticket.id} className="border-b group relative hover:bg-gray-50">
-                                            <td className="px-3 py-2 text-sm truncate">{ticket.id}</td>
-                                            <td className="px-3 py-2 text-sm truncate">{ticket.customerId}</td>
-                                            <td className="px-3 py-2 text-sm truncate">{ticket.username}</td>
+                                        <tr key={ticket._id} className="border-b group relative hover:bg-gray-50">
+                                            <td className="px-3 py-2 text-sm truncate">{ticket._id}</td>
+                                            <td className="px-3 py-2 text-sm truncate">{ticket.customer?._id || ''}</td>
+                                            <td className="px-3 py-2 text-sm truncate">{ticket.customer?.name || ''}</td>
                                             <td className="px-3 py-2 text-sm truncate group relative">
                                                 <span 
                                                     className="cursor-pointer text-[var(--hotpink)] hover:underline"
@@ -209,26 +219,26 @@ const AssignTickets = () => {
                                                         setShowDetailsModal(true);
                                                     }}
                                                 >
-                                                    {ticket.issue}
+                                                    {ticket.subject}
                                                 </span>
                                             </td>
                                             <td className="px-3 py-2 text-sm truncate">{ticket.createdAt}</td>
                                             <td className="px-3 py-2 text-sm">
                                                 <select
                                                     className="w-full px-2 py-1 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[var(--hotpink)]"
-                                                    value={tempStaffSelection[ticket.id] || ''}
-                                                    onChange={(e) => handleStaffSelect(ticket.id, e.target.value)}
+                                                    value={tempStaffSelection[ticket._id] || ''}
+                                                    onChange={(e) => handleStaffSelect(ticket._id, e.target.value)}
                                                 >
                                                     <option value="">Select Staff</option>
-                                                    {staffMembers.map(staff => (
-                                                        <option key={staff.id} value={staff.id}>
-                                                            {staff.name} ({staff.ticketsAssigned} tickets)
+                                                    {staffMembers.filter(staff => staff.role === 'staff').map(staff => (
+                                                        <option key={staff._id} value={staff._id}>
+                                                            {staff.name}
                                                         </option>
                                                     ))}
                                                 </select>
                                             </td>
                                             <td className="px-3 py-2 text-sm">
-                                                {assignedTickets.has(ticket.id) ? (
+                                                {assignedTickets.has(ticket._id) ? (
                                                     <button
                                                         disabled
                                                         className="py-1 px-3 rounded-md text-white text-sm bg-gray-400 cursor-not-allowed"
@@ -238,9 +248,9 @@ const AssignTickets = () => {
                                                 ) : (
                                                     <button
                                                         onClick={() => handleAssignClick(ticket)}
-                                                        disabled={!tempStaffSelection[ticket.id]}
+                                                        disabled={!tempStaffSelection[ticket._id]}
                                                         className={`py-1 px-3 rounded-md text-white text-sm transition ${
-                                                            tempStaffSelection[ticket.id]
+                                                            tempStaffSelection[ticket._id]
                                                                 ? 'bg-[var(--hotpink)] hover:bg-[var(--roseberry)] cursor-pointer'
                                                                 : 'bg-gray-300 cursor-not-allowed'
                                                         }`}
@@ -288,9 +298,9 @@ const AssignTickets = () => {
                                         <p><span className="font-medium text-gray-600">Created:</span></p>
                                     </div>
                                     <div className="space-y-2">
-                                        <p>{selectedTicket.id}</p>
-                                        <p>{selectedTicket.customerId}</p>
-                                        <p>{selectedTicket.username}</p>
+                                        <p>{selectedTicket._id}</p>
+                                        <p>{selectedTicket.customer?.name || ''}</p>
+                                        <p>{selectedTicket.customer?.username || ''}</p>
                                         <p className={`inline-block px-2 py-0.5 rounded-full text-xs ${getStatusColor(selectedTicket.status)}`}>
                                             {selectedTicket.status.charAt(0).toUpperCase() + selectedTicket.status.slice(1)}
                                         </p>
@@ -299,7 +309,7 @@ const AssignTickets = () => {
                                 </div>
                                 <div className="pt-4 border-t">
                                     <p className="font-medium text-gray-600 mb-2">Issue Description:</p>
-                                    <p className="text-gray-700 whitespace-pre-wrap">{selectedTicket.issue}</p>
+                                    <p className="text-gray-700 whitespace-pre-wrap">{selectedTicket.subject}</p>
                                 </div>
                             </div>
                         </div>
@@ -324,8 +334,8 @@ const AssignTickets = () => {
                                 </button>
                             </div>
                             <p className="mb-6">
-                                Are you sure you want to assign ticket {selectedTicket.id} to{' '}
-                                <span className="font-medium">{staffMembers.find(s => s.id === parseInt(selectedStaff))?.name}</span>?
+                                Are you sure you want to assign ticket {selectedTicket._id} to{' '}
+                                <span className="font-medium">{staffMembers.find(s => s._id === parseInt(selectedStaff))?.name}</span>?
                             </p>
                             <div className="flex justify-end gap-4">
                                 <button

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import imgplaceholder from '../../assets/img-placeholder.webp';
+import { useDispatch, useSelector } from 'react-redux';
+import { register, reset } from '../../redux/slices/authSlice';
 
 const CreateAccount = () => {
     const [name, setName] = useState('');
@@ -8,12 +10,19 @@ const CreateAccount = () => {
     const [password, setPassword] = useState('');
 
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const { isSuccess } = useSelector((state) => state.auth);
+
+    useEffect(() => {
+        if (isSuccess) {
+            navigate('/login');
+            dispatch(reset());
+        }
+    }, [isSuccess, navigate, dispatch]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // account creation logic
-
-        console.log('Creating account...', { name, email, password });
+        dispatch(register({ name, email, password, role: 'customer' }));
     };
 
     const redirectToLogin = () => {
