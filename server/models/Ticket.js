@@ -13,8 +13,8 @@ const ticketSchema = mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: ['open', 'in progress', 'closed'],
-      default: 'open',
+      enum: ['unassigned', 'in progress', 'resolved'],
+      default: 'unassigned',
     },
     customer: {
       type: mongoose.Types.ObjectId,

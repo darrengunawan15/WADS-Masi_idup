@@ -1,15 +1,24 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { createTicket } from '../redux/slices/ticketSlice';
+import { getCategories } from '../redux/slices/categorySlice';
 
 const CreateTicketModal = ({ isOpen, onClose }) => {
     const dispatch = useDispatch();
+    const { categories, isLoading: isCategoriesLoading } = useSelector((state) => state.categories || { categories: [], isLoading: false });
     const [formData, setFormData] = useState({
         subject: '',
         description: '',
-        files: []
+        files: [],
+        category: '',
     });
     const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            dispatch(getCategories());
+        }
+    }, [dispatch, isOpen]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -70,6 +79,28 @@ const CreateTicketModal = ({ isOpen, onClose }) => {
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Category Dropdown */}
+                        <div>
+                            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                                Category
+                            </label>
+                            <select
+                                id="category"
+                                name="category"
+                                value={formData.category}
+                                onChange={handleChange}
+                                required
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--hotpink)] focus:border-transparent"
+                            >
+                                <option value="" disabled>
+                                    {isCategoriesLoading ? 'Loading categories...' : 'Select a category'}
+                                </option>
+                                {categories && categories.map((cat) => (
+                                    <option key={cat._id} value={cat._id}>{cat.categoryName}</option>
+                                ))}
+                            </select>
+                        </div>
+
                         {/* Issue Field */}
                         <div>
                             <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">

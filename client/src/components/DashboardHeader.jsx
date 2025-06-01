@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { logout } from '../redux/slices/authSlice';
 
-const DashboardHeader = ({ staffName }) => {
+const DashboardHeader = ({ staffName, role }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const menuRef = useRef(null);
@@ -43,6 +43,14 @@ const DashboardHeader = ({ staffName }) => {
         }
     };
 
+    // Dynamic label based on role
+    const getRoleLabel = (role) => {
+        if (role === 'customer') return 'Cihen Customer';
+        if (role === 'staff') return 'Support Staff';
+        if (role === 'admin') return 'Support Admin';
+        return 'User';
+    };
+
     return (
         <>
             <div className="flex justify-between items-start mb-8">
@@ -53,7 +61,7 @@ const DashboardHeader = ({ staffName }) => {
                 <div className="flex items-center gap-4 relative" ref={menuRef}>
                     <div className="text-right">
                         <p className="text-sm font-medium text-gray-800">{staffName}</p>
-                        <p className="text-xs text-gray-500">Support Staff</p>
+                        <p className="text-xs text-gray-500">{getRoleLabel(role)}</p>
                     </div>
                     <div 
                         className="w-12 h-12 rounded-full bg-[var(--hotpink)] flex items-center justify-center text-white font-semibold text-lg cursor-pointer hover:bg-[var(--roseberry)] transition-colors"

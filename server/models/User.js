@@ -29,6 +29,8 @@ const userSchema = mongoose.Schema(
     },
     status: {
       type: String,
+      enum: ['active', 'inactive'],
+      default: 'active',
     },
     refreshTokens: [String], // Add refreshTokens field as an array of strings
   },

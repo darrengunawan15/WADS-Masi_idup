@@ -77,6 +77,12 @@ const getAverageResponseTime = async (token) => {
     return response.data;
 };
 
+// Get tickets for the logged-in customer
+const getCustomerTickets = async (token) => {
+  const response = await axios.get(API_URL + 'customer', authHeader(token));
+  return response.data;
+};
+
 const ticketService = {
   createTicket,
   getTickets,
@@ -88,6 +94,7 @@ const ticketService = {
   uploadFile,
   getDailyTicketStats,
   getAverageResponseTime,
+  getCustomerTickets,
 };
 
 export default ticketService; 

@@ -124,7 +124,7 @@ const DashboardStaff = () => {
     const newMessages = messages.filter(msg => msg.isNew).length;
 
     const handleViewTickets = () => navigate('/manage-tickets');
-    const handleViewMessages = () => navigate('/manage-tickets');
+    const handleViewMessages = () => navigate('/customer-support');
 
     // Chart Data
     const ticketsPerDayData = {
@@ -209,177 +209,178 @@ const DashboardStaff = () => {
         .slice(0, 5); // Get only the top 5 recent messages
 
     return (
-        <div className={`flex-1 bg-gray-50 p-6 h-screen overflow-hidden transition-all duration-300 ${sidebarWidth === '20' ? 'ml-20' : 'ml-64'}`}>
-            <DashboardHeader staffName={user?.name || 'Staff'} />
-
-            <div className="h-full flex flex-col space-y-6 pt-8">
-                {/* Counters Row */}
-                <div className="grid grid-cols-4 gap-6">
-                    {/* Monthly Tickets */}
-                    <div className="col-span-2">
-                        <div className="flex items-baseline gap-2">
-                            <h3 className="text-sm font-semibold text-gray-700">Your Total Tickets</h3>
-                            <span className="text-3xl font-bold text-[var(--hotpink)]">{totalStaffTickets}</span>
+        <div className={`h-screen overflow-auto bg-gray-50 transition-all duration-300 ${sidebarWidth === '20' ? 'ml-20' : 'ml-64'}`}>
+            <div className="p-6">
+                <DashboardHeader staffName={user?.name || 'Staff'} role={user?.role} />
+                <div className="h-full flex flex-col space-y-6 pt-8">
+                    {/* Counters Row */}
+                    <div className="grid grid-cols-4 gap-6">
+                        {/* Monthly Tickets */}
+                        <div className="col-span-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold text-gray-700">Your Total Tickets</h3>
+                                <span className="text-3xl font-bold text-[var(--hotpink)]">{totalStaffTickets}</span>
+                            </div>
+                            <div className="mt-2">
+                                <span className="text-sm text-gray-600">Unsolved: {unsolvedStaffTickets}</span>
+                            </div>
                         </div>
-                        <div className="mt-2">
-                            <span className="text-sm text-gray-600">Unsolved: {unsolvedStaffTickets}</span>
+
+                        {/* Spacer */}
+                        <div></div>
+
+                        {/* Ticket Status Counts */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">Ticket Status</h3>
+                            <div className="flex gap-6">
+                                <div className="flex flex-col items-center">
+                                    <span className="text-sm text-gray-600">New</span>
+                                    <span className="text-lg font-semibold text-blue-500">{calculatedStatusCounts.new}</span>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-sm text-gray-600">Open</span>
+                                    <span className="text-lg font-semibold text-[var(--hotpink)]">{calculatedStatusCounts.open}</span>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-sm text-gray-600">In Progress</span>
+                                    <span className="text-lg font-semibold text-[var(--cyan)]">{calculatedStatusCounts.inProgress}</span> {/* Assuming --cyan is a color variable */}
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-sm text-gray-600">Pending</span>
+                                    <span className="text-lg font-semibold text-yellow-500">{calculatedStatusCounts.pending}</span>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-sm text-gray-600">Closed</span>
+                                    <span className="text-lg font-semibold text-green-500">{calculatedStatusCounts.closed}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Spacer */}
-                    <div></div>
-
-                    {/* Ticket Status Counts */}
-                    <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-3">Ticket Status</h3>
-                        <div className="flex gap-6">
-                            <div className="flex flex-col items-center">
-                                <span className="text-sm text-gray-600">New</span>
-                                <span className="text-lg font-semibold text-blue-500">{calculatedStatusCounts.new}</span>
-                            </div>
-                            <div className="flex flex-col items-center">
-                                <span className="text-sm text-gray-600">Open</span>
-                                <span className="text-lg font-semibold text-[var(--hotpink)]">{calculatedStatusCounts.open}</span>
-                            </div>
-                            <div className="flex flex-col items-center">
-                                <span className="text-sm text-gray-600">In Progress</span>
-                                <span className="text-lg font-semibold text-[var(--cyan)]">{calculatedStatusCounts.inProgress}</span> {/* Assuming --cyan is a color variable */}
-                            </div>
-                            <div className="flex flex-col items-center">
-                                <span className="text-sm text-gray-600">Pending</span>
-                                <span className="text-lg font-semibold text-yellow-500">{calculatedStatusCounts.pending}</span>
-                            </div>
-                            <div className="flex flex-col items-center">
-                                <span className="text-sm text-gray-600">Closed</span>
-                                <span className="text-lg font-semibold text-green-500">{calculatedStatusCounts.closed}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Charts Row */}
-                <div className="grid grid-cols-3 gap-6">
-                    {/* Tickets per Day Chart */}
-                    <div className="bg-white p-4 rounded-xl shadow-lg h-[300px]">
-                        <h3 className="text-lg font-semibold mb-4">Tickets per Day</h3>
-                        <div className="h-[calc(100%-40px)]">
-                            <Bar data={ticketsPerDayData} options={{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: {
-                                        display: false
+                    {/* Charts Row */}
+                    <div className="grid grid-cols-3 gap-6">
+                        {/* Tickets per Day Chart */}
+                        <div className="bg-white p-4 rounded-xl shadow-lg h-[300px]">
+                            <h3 className="text-lg font-semibold mb-4">Tickets per Day</h3>
+                            <div className="h-[calc(100%-40px)]">
+                                <Bar data={ticketsPerDayData} options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            display: false
+                                        }
                                     }
-                                }
-                            }} />
+                                }} />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Ticket Status Chart */}
-                    <div className="bg-white p-4 rounded-xl shadow-lg h-[300px]">
-                        <h3 className="text-lg font-semibold mb-4">Ticket Status</h3>
-                        <div className="h-[calc(100%-40px)]">
-                            <Pie data={ticketStatusData} options={{
-                                responsive: true,
-                                maintainAspectRatio: false
-                            }} />
+                        {/* Ticket Status Chart */}
+                        <div className="bg-white p-4 rounded-xl shadow-lg h-[300px]">
+                            <h3 className="text-lg font-semibold mb-4">Ticket Status</h3>
+                            <div className="h-[calc(100%-40px)]">
+                                <Pie data={ticketStatusData} options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false
+                                }} />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Response Time Chart */}
-                    <div className="bg-white p-4 rounded-xl shadow-lg h-[300px]">
-                        <h3 className="text-lg font-semibold mb-4">Response Time</h3>
-                        <div className="h-[calc(100%-40px)]">
-                            <Line data={responseTimeData} options={{
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                plugins: {
-                                    legend: {
-                                        display: false
+                        {/* Response Time Chart */}
+                        <div className="bg-white p-4 rounded-xl shadow-lg h-[300px]">
+                            <h3 className="text-lg font-semibold mb-4">Response Time</h3>
+                            <div className="h-[calc(100%-40px)]">
+                                <Line data={responseTimeData} options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            display: false
+                                        }
                                     }
-                                }
-                            }} />
+                                }} />
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Tables Row */}
-                <div className="grid grid-cols-3 gap-6">
-                    {/* Manage Tickets Section - Spans 2 columns */}
-                    <div className="col-span-2 bg-white p-4 rounded-xl shadow-lg">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-gray-800">Recent Tickets</h2>
-                            <button 
-                                onClick={() => navigate('/manage-tickets')}
-                                className="text-[var(--hotpink)] hover:text-[var(--roseberry)] transition-colors cursor-pointer"
-                            >
-                                View More
-                            </button>
-                        </div>
+                    {/* Tables Row */}
+                    <div className="grid grid-cols-3 gap-6">
+                        {/* Manage Tickets Section - Spans 2 columns */}
+                        <div className="col-span-2 bg-white p-4 rounded-xl shadow-lg">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-semibold text-gray-800">Recent Tickets</h2>
+                                <button 
+                                    onClick={() => navigate('/manage-tickets')}
+                                    className="text-[var(--hotpink)] hover:text-[var(--roseberry)] transition-colors cursor-pointer"
+                                >
+                                    View More
+                                </button>
+                            </div>
 
-                        <div className="overflow-auto">
-                            <table className="min-w-full table-auto rounded-lg overflow-hidden border border-gray-300">
-                                <thead className="bg-[var(--hotpink)] text-white sticky top-0">
-                                    <tr>
-                                        <th className="px-3 py-2 text-left text-sm">Ticket #</th>
-                                        <th className="px-3 py-2 text-left text-sm">Customer ID</th>
-                                        <th className="px-3 py-2 text-left text-sm">Username</th>
-                                        <th className="px-3 py-2 text-left text-sm">Issue</th>
-                                        <th className="px-3 py-2 text-left text-sm">Status</th>
-                                        <th className="px-3 py-2 text-left text-sm">Date Issued</th>
-                                        <th className="px-3 py-2 text-left text-sm">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {recentStaffTickets.map(ticket => (
-                                        <tr key={ticket._id} className="border-b border-gray-200 hover:bg-gray-100">
-                                            <td className="px-3 py-2 text-sm text-gray-800">{ticket._id.substring(0, 6)}...</td>
-                                            <td className="px-3 py-2 text-sm text-gray-800">{ticket.user?._id.substring(0, 6)}...</td>
-                                            <td className="px-3 py-2 text-sm text-gray-800">{ticket.user?.name || 'N/A'}</td>
-                                            <td className="px-3 py-2 text-sm text-gray-800">{ticket.subject}</td>
-                                            <td className="px-3 py-2 text-sm text-gray-800 capitalize">{ticket.status}</td>
-                                            <td className="px-3 py-2 text-sm text-gray-800">{format(new Date(ticket.createdAt), 'yyyy-MM-dd')}</td>
-                                            <td className="px-3 py-2 text-sm text-gray-800">
-                                                <button 
-                                                    onClick={() => navigate(`/ticket-details/${ticket._id}`)}
-                                                    className="text-[var(--blush)] hover:underline"
-                                                >
-                                                    View
-                                                </button>
-                                            </td>
+                            <div className="overflow-auto">
+                                <table className="min-w-full table-auto rounded-lg overflow-hidden border border-gray-300">
+                                    <thead className="bg-[var(--hotpink)] text-white sticky top-0">
+                                        <tr>
+                                            <th className="px-3 py-2 text-left text-sm">Ticket #</th>
+                                            <th className="px-3 py-2 text-left text-sm">Customer ID</th>
+                                            <th className="px-3 py-2 text-left text-sm">Username</th>
+                                            <th className="px-3 py-2 text-left text-sm">Issue</th>
+                                            <th className="px-3 py-2 text-left text-sm">Status</th>
+                                            <th className="px-3 py-2 text-left text-sm">Date Issued</th>
+                                            <th className="px-3 py-2 text-left text-sm">Action</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {recentStaffTickets.map(ticket => (
+                                            <tr key={ticket._id} className="border-b border-gray-200 hover:bg-gray-100">
+                                                <td className="px-3 py-2 text-sm text-gray-800">{ticket._id.substring(0, 6)}...</td>
+                                                <td className="px-3 py-2 text-sm text-gray-800">{ticket.user?._id.substring(0, 6)}...</td>
+                                                <td className="px-3 py-2 text-sm text-gray-800">{ticket.user?.name || 'N/A'}</td>
+                                                <td className="px-3 py-2 text-sm text-gray-800">{ticket.subject}</td>
+                                                <td className="px-3 py-2 text-sm text-gray-800 capitalize">{ticket.status}</td>
+                                                <td className="px-3 py-2 text-sm text-gray-800">{format(new Date(ticket.createdAt), 'yyyy-MM-dd')}</td>
+                                                <td className="px-3 py-2 text-sm text-gray-800">
+                                                    <button 
+                                                        onClick={() => navigate(`/ticket-details/${ticket._id}`)}
+                                                        className="text-[var(--blush)] hover:underline"
+                                                    >
+                                                        View
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Recent Messages Section - Spans 1 column */}
-                    <div className="col-span-1 bg-white p-4 rounded-xl shadow-lg">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-gray-800">Recent Messages</h2>
-                            <button 
-                                onClick={handleViewMessages}
-                                className="text-[var(--hotpink)] hover:text-[var(--roseberry)] transition-colors cursor-pointer"
-                            >
-                                View More
-                            </button>
-                        </div>
+                        {/* Recent Messages Section - Spans 1 column */}
+                        <div className="col-span-1 bg-white p-4 rounded-xl shadow-lg">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-semibold text-gray-800">Recent Messages</h2>
+                                <button 
+                                    onClick={handleViewMessages}
+                                    className="text-[var(--hotpink)] hover:text-[var(--roseberry)] transition-colors cursor-pointer"
+                                >
+                                    View More
+                                </button>
+                            </div>
 
-                        <div className="space-y-4">
-                            {ticketsWithRecentCustomerComments.length > 0 ? (
-                                ticketsWithRecentCustomerComments.map(message => (
-                                    <div key={message._id} className="p-3 rounded-md bg-blue-50 cursor-pointer hover:bg-blue-100 transition-colors"
-                                        onClick={() => navigate(`/ticket-details/${message._id}`)} // Navigate to ticket details on click
-                                    >
-                                        <p className="text-sm font-semibold text-gray-800">{message.customerName} on Ticket: {message.subject}</p>
-                                        <p className="text-sm text-gray-600 truncate">{message.latestCommentContent}</p>
-                                         <p className="text-xs text-gray-500 mt-1">{format(new Date(message.latestCommentCreatedAt), 'yyyy-MM-dd HH:mm')}</p>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="text-sm text-gray-600">No recent customer messages on your assigned tickets.</p>
-                            )}
+                            <div className="space-y-4">
+                                {ticketsWithRecentCustomerComments.length > 0 ? (
+                                    ticketsWithRecentCustomerComments.map(message => (
+                                        <div key={message._id} className="p-3 rounded-md bg-blue-50 cursor-pointer hover:bg-blue-100 transition-colors"
+                                            onClick={() => navigate(`/ticket-details/${message._id}`)} // Navigate to ticket details on click
+                                        >
+                                            <p className="text-sm font-semibold text-gray-800">{message.customerName} on Ticket: {message.subject}</p>
+                                            <p className="text-sm text-gray-600 truncate">{message.latestCommentContent}</p>
+                                             <p className="text-xs text-gray-500 mt-1">{format(new Date(message.latestCommentCreatedAt), 'yyyy-MM-dd HH:mm')}</p>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-gray-600">No recent customer messages on your assigned tickets.</p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

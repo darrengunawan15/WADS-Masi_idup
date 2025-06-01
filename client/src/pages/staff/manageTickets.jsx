@@ -12,6 +12,7 @@ const ManageTickets = () => {
 
     const dispatch = useDispatch();
     const { tickets, isLoading, isError, message } = useSelector((state) => state.tickets);
+    const { user } = useSelector((state) => state.auth);
 
     useEffect(() => {
         if (isError) {
@@ -28,17 +29,41 @@ const ManageTickets = () => {
     }, [dispatch, isError, message]);
 
     // Filter tickets based on status and search query
+    const staffId = String(user?._id).trim();
     const filteredTickets = tickets.filter(ticket => {
-        const matchesStatus = selectedStatus === 'all' ||
-                             (selectedStatus === 'open' && ticket.status === 'open') ||
-                             (selectedStatus === 'in progress' && ticket.status === 'in progress') ||
-                             (selectedStatus === 'closed' && ticket.status === 'closed') ||
-                             (selectedStatus === 'new' && ticket.status === 'new') ||
-                             (selectedStatus === 'pending' && ticket.status === 'pending');
+        // Only consider tickets assigned to this staff
+        const isAssignedToStaff = ticket.assignedTo && String(ticket.assignedTo._id).trim() === staffId;
+        if (!isAssignedToStaff) return false;
+
+        let matchesStatus = false;
+        if (selectedStatus === 'all') {
+            matchesStatus = true;
+        } else if (selectedStatus === 'in progress' && ticket.status === 'in progress') {
+            matchesStatus = true;
+        } else if (selectedStatus === 'resolved' && ticket.status === 'resolved') {
+            matchesStatus = true;
+        } else if (selectedStatus === 'new') {
+            // Show tickets assigned to staff, not resolved, and staff has not commented
+            const authorIds = (ticket.comments || [])
+                .map(comment => comment && comment.author && comment.author._id ? String(comment.author._id).trim() : null)
+                .filter(id => id !== null);
+            const hasStaffComment = authorIds.includes(staffId);
+
+            // Debug log for development
+            console.log('NEW FILTER CHECK:', {
+                ticketId: ticket._id,
+                assignedTo: ticket.assignedTo?._id,
+                staffId,
+                status: ticket.status,
+                authorIds,
+                hasStaffComment
+            });
+
+            matchesStatus = ticket.status !== 'resolved' && !hasStaffComment;
+        }
         const realDataMatchesSearch = ticket._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
                                       (ticket.customer?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                                       ticket.subject.toLowerCase().includes(searchQuery.toLowerCase());
-                                     
         return matchesStatus && realDataMatchesSearch;
     });
 
@@ -113,10 +138,8 @@ const ManageTickets = () => {
                             >
                                 <option value="all" className="cursor-pointer">All Status</option>
                                 <option value="new" className="cursor-pointer">New</option>
-                                <option value="open" className="cursor-pointer">Open</option>
                                 <option value="in progress" className="cursor-pointer">In Progress</option>
-                                <option value="pending" className="cursor-pointer">Pending</option>
-                                <option value="closed" className="cursor-pointer">Closed</option>
+                                <option value="resolved" className="cursor-pointer">Resolved</option>
                             </select>
                             <button
                                 onClick={() => navigate('/customer-support')}
@@ -159,7 +182,11 @@ const ManageTickets = () => {
                                         <td className="px-3 py-2 text-sm">
                                             <button 
                                                 onClick={() => navigate(`/ticket-details/${ticket._id}`)}
-                                                className="py-1 px-3 bg-[var(--hotpink)] text-white rounded-md hover:bg-[var(--roseberry)] transition text-sm cursor-pointer"
+                                                disabled={ticket.status === 'resolved' || ticket.status === 'closed'}
+                                                className={`py-1 px-3 rounded-md text-sm transition cursor-pointer 
+                                                    ${(ticket.status === 'resolved' || ticket.status === 'closed')
+                                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                        : 'bg-[var(--hotpink)] text-white hover:bg-[var(--roseberry)]'}`}
                                             >
                                                 Resolve
                                             </button>

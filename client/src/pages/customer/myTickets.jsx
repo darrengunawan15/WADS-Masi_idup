@@ -1,89 +1,45 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { getTickets } from '../../redux/slices/ticketSlice';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { getCustomerTickets } from '../../redux/slices/ticketSlice';
 import Spinner from '../../components/Spinner';
 import CreateTicketModal from '../../components/CreateTicketModal';
 import { format } from 'date-fns';
 
-// Sample ticket data
-const sampleTickets = [
-    {
-        _id: 'TICKET001',
-        subject: 'Login Issues',
-        description: 'Unable to log in to my account. Getting an error message.',
-        status: 'new',
-        priority: 'High',
-        createdAt: '2024-03-15T10:30:00',
-        updatedAt: '2024-03-15T10:30:00'
-    },
-    {
-        _id: 'TICKET002',
-        subject: 'Payment Processing Error',
-        description: 'Payment is not being processed. Getting stuck at checkout.',
-        status: 'in progress',
-        priority: 'High',
-        createdAt: '2024-03-14T15:45:00',
-        updatedAt: '2024-03-15T09:20:00'
-    },
-    {
-        _id: 'TICKET003',
-        subject: 'Product Not Showing',
-        description: 'Some products are not displaying correctly on the website.',
-        status: 'pending',
-        priority: 'Medium',
-        createdAt: '2024-03-13T11:20:00',
-        updatedAt: '2024-03-14T16:30:00'
-    },
-    {
-        _id: 'TICKET004',
-        subject: 'Order Status Update',
-        description: 'Need to check the status of my recent order #12345.',
-        status: 'open',
-        priority: 'Low',
-        createdAt: '2024-03-12T09:15:00',
-        updatedAt: '2024-03-12T09:15:00'
-    },
-    {
-        _id: 'TICKET005',
-        subject: 'Account Settings',
-        description: 'Unable to update my profile information.',
-        status: 'closed',
-        priority: 'Medium',
-        createdAt: '2024-03-10T14:20:00',
-        updatedAt: '2024-03-11T16:45:00'
-    },
-    {
-        _id: 'TICKET006',
-        subject: 'Website Performance',
-        description: 'Website is loading very slowly on mobile devices.',
-        status: 'closed',
-        priority: 'High',
-        createdAt: '2024-03-09T10:00:00',
-        updatedAt: '2024-03-10T11:30:00'
-    }
-];
-
 const MyTickets = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const dispatch = useDispatch();
-    const { tickets: reduxTickets, isLoading } = useSelector((state) => state.tickets);
+    const { customerTickets, isCustomerTicketsLoading } = useSelector((state) => state.tickets);
     const [isCreateTicketModalOpen, setIsCreateTicketModalOpen] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState(null);
     
-    // Use sample data if no tickets from Redux
-    const tickets = reduxTickets.length > 0 ? reduxTickets : sampleTickets;
-
     useEffect(() => {
-        dispatch(getTickets());
+        dispatch(getCustomerTickets());
     }, [dispatch]);
 
-    if (isLoading) {
+    useEffect(() => {
+        if (location.state && location.state.openCreateTicket) {
+            setIsCreateTicketModalOpen(true);
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location, navigate]);
+
+    if (isCustomerTicketsLoading) {
         return <Spinner />;
     }
 
-    const openTickets = tickets.filter(ticket => ticket.status !== 'closed');
-    const closedTickets = tickets.filter(ticket => ticket.status === 'closed');
+    const tickets = customerTickets;
+
+    // Utility to map status for open/closed logic
+    const mapStatusForOpenClosed = (status) => {
+        if (status === 'resolved') return 'closed';
+        return 'open'; // 'unassigned' and 'in progress' are 'open'
+    };
+
+    // Use mapped status for filtering
+    const openTickets = tickets.filter(ticket => mapStatusForOpenClosed(ticket.status) === 'open');
+    const closedTickets = tickets.filter(ticket => mapStatusForOpenClosed(ticket.status) === 'closed');
 
     const getStatusColor = (status) => {
         switch (status) {

@@ -117,7 +117,15 @@ const TicketDetails = () => {
                         <p className="text-gray-600">Ticket ID: {ticket._id}</p>
                     </div>
                     <button
-                        onClick={() => navigate('/dashboard-staff')}
+                        onClick={() => {
+                            if (user?.role === 'admin') {
+                                navigate('/dashboard-admin');
+                            } else if (user?.role === 'staff') {
+                                navigate('/dashboard-staff');
+                            } else {
+                                navigate('/dashboard-customer');
+                            }
+                        }}
                         className="px-4 py-2 text-[var(--hotpink)] hover:text-[var(--roseberry)] transition-colors"
                     >
                         ← Back to Dashboard

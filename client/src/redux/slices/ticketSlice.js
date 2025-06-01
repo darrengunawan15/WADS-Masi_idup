@@ -16,6 +16,10 @@ const initialState = {
   isResponseTimeLoading: false, // Loading state
   isResponseTimeError: false, // Error state
   responseTimeMessage: '', // Error message
+  customerTickets: [], // Add state for customer tickets
+  isCustomerTicketsLoading: false,
+  isCustomerTicketsError: false,
+  customerTicketsMessage: '',
 };
 
 // Create new ticket (for customers)
@@ -211,6 +215,25 @@ export const fetchAverageResponseTime = createAsyncThunk(
     }
 );
 
+// Get tickets for the logged-in customer
+export const getCustomerTickets = createAsyncThunk(
+  'tickets/getCustomerTickets',
+  async (_, thunkAPI) => {
+    try {
+      const token = thunkAPI.getState().auth.accessToken;
+      return await ticketService.getCustomerTickets(token);
+    } catch (error) {
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 export const ticketSlice = createSlice({
   name: 'ticket',
   initialState,
@@ -335,6 +358,20 @@ export const ticketSlice = createSlice({
           state.isResponseTimeLoading = false;
           state.isResponseTimeError = true;
           state.responseTimeMessage = action.payload;
+        })
+        .addCase(getCustomerTickets.pending, (state) => {
+          state.isCustomerTicketsLoading = true;
+          state.isCustomerTicketsError = false;
+          state.customerTicketsMessage = '';
+        })
+        .addCase(getCustomerTickets.fulfilled, (state, action) => {
+          state.isCustomerTicketsLoading = false;
+          state.customerTickets = action.payload;
+        })
+        .addCase(getCustomerTickets.rejected, (state, action) => {
+          state.isCustomerTicketsLoading = false;
+          state.isCustomerTicketsError = true;
+          state.customerTicketsMessage = action.payload;
         });
 
   },

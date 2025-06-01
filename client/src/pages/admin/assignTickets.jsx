@@ -99,7 +99,7 @@ const AssignTickets = () => {
         try {
             setIsLoading(true);
             const token = localStorage.getItem('accessToken');
-            await adminService.assignTicket(selectedTicket._id, selectedStaff, token);
+            await adminService.assignTicket(selectedTicket._id, selectedStaff, token, 'in progress');
             setAssignedTickets(prev => new Set([...prev, selectedTicket._id]));
             toast.success(`Ticket ${selectedTicket._id} has been assigned!`, {
                 position: "top-center",
@@ -151,6 +151,12 @@ const AssignTickets = () => {
         const matchesStatus = selectedStatus === 'all' || ticket.status === selectedStatus;
         return matchesSearch && matchesStatus;
     });
+
+    // Utility to map status for open/closed logic
+    const mapStatusForOpenClosed = (status) => {
+        if (status === 'resolved') return 'closed';
+        return 'open'; // 'unassigned' and 'in progress' are 'open'
+    };
 
     if (isLoading) {
         return <Spinner />;
@@ -238,7 +244,7 @@ const AssignTickets = () => {
                                                 </select>
                                             </td>
                                             <td className="px-3 py-2 text-sm">
-                                                {assignedTickets.has(ticket._id) ? (
+                                                {ticket.assignedTo && tempStaffSelection[ticket._id] === ticket.assignedTo._id ? (
                                                     <button
                                                         disabled
                                                         className="py-1 px-3 rounded-md text-white text-sm bg-gray-400 cursor-not-allowed"

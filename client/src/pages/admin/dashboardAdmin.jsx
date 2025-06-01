@@ -46,6 +46,7 @@ const DashboardAdmin = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const { user: adminUser } = useSelector((state) => state.auth);
+    const [unassignedTickets, setUnassignedTickets] = useState([]);
 
     useEffect(() => {
         const handleResize = () => {
@@ -72,14 +73,16 @@ const DashboardAdmin = () => {
             setError(null);
             try {
                 const token = localStorage.getItem('accessToken');
-                const [ticketsRes, usersRes, staffRes] = await Promise.all([
+                const [ticketsRes, usersRes, staffRes, unassignedRes] = await Promise.all([
                     adminService.getAllTickets(token),
                     adminService.getAllUsers(token),
                     adminService.getStaff(token),
+                    adminService.getUnassignedTickets(token),
                 ]);
                 setTickets(ticketsRes);
                 setUsers(usersRes);
                 setStaffMembers(staffRes);
+                setUnassignedTickets(unassignedRes);
             } catch (err) {
                 setError('Failed to load admin dashboard data');
                 toast.error('Failed to load admin dashboard data');
@@ -99,7 +102,7 @@ const DashboardAdmin = () => {
 
     // Calculate stats from real data
     const totalTickets = tickets.length;
-    const unassignedTickets = tickets.filter(ticket => !ticket.assignedTo).length;
+    const unassignedTicketsCount = unassignedTickets.length;
     const assignedTickets = tickets.filter(ticket => ticket.assignedTo).length;
     const inProgressTickets = tickets.filter(ticket => ticket.status === 'in progress').length;
     const resolvedTickets = tickets.filter(ticket => ticket.status === 'closed').length;
@@ -110,12 +113,31 @@ const DashboardAdmin = () => {
 
     // Staff performance
     const staffPerformance = staffMembers.map(staff => {
-        const assigned = tickets.filter(ticket => ticket.assignedTo && ticket.assignedTo._id === staff._id).length;
-        const resolved = tickets.filter(ticket => ticket.assignedTo && ticket.assignedTo._id === staff._id && ticket.status === 'closed').length;
+        const assignedTickets = tickets.filter(ticket => ticket.assignedTo && ticket.assignedTo._id === staff._id);
+        const ticketsAssigned = assignedTickets.length;
+        const ticketsResolved = assignedTickets.filter(ticket => ticket.status === 'resolved').length;
+        // Calculate avg response time in hours for resolved/in progress tickets
+        const relevantTickets = assignedTickets.filter(ticket => ticket.status === 'resolved' || ticket.status === 'in progress');
+        let avgResponseTime = null;
+        if (relevantTickets.length > 0) {
+            const totalHours = relevantTickets.reduce((sum, ticket) => {
+                const created = new Date(ticket.createdAt);
+                const updated = new Date(ticket.updatedAt);
+                return sum + (updated - created) / 3600000;
+            }, 0);
+            avgResponseTime = (totalHours / relevantTickets.length).toFixed(2);
+        }
+        // Calculate performance percentage
+        let performance = 'N/A';
+        if (ticketsAssigned > 0) {
+            performance = ((ticketsResolved / ticketsAssigned) * 100).toFixed(1);
+        }
         return {
             ...staff,
-            ticketsAssigned: assigned,
-            ticketsResolved: resolved,
+            ticketsAssigned,
+            ticketsResolved,
+            avgResponseTime: avgResponseTime !== null ? avgResponseTime : 'N/A',
+            performance,
         };
     });
 
@@ -123,7 +145,7 @@ const DashboardAdmin = () => {
     const ticketAssignmentData = {
         labels: ['Assigned', 'Unassigned'],
         datasets: [{
-            data: [assignedTickets, unassignedTickets],
+            data: [assignedTickets, unassignedTicketsCount],
             backgroundColor: [
                 'rgba(75, 192, 192, 0.5)',
                 'rgba(255, 99, 132, 0.5)',
@@ -159,7 +181,7 @@ const DashboardAdmin = () => {
     const ticketStatusData = {
         labels: ['Assigned', 'Unassigned', 'In Progress', 'Resolved'],
         datasets: [{
-            data: [assignedTickets, unassignedTickets, inProgressTickets, resolvedTickets],
+            data: [assignedTickets, unassignedTicketsCount, inProgressTickets, resolvedTickets],
             backgroundColor: [
                 'rgba(255, 99, 132, 0.5)',
                 'rgba(54, 162, 235, 0.5)',
@@ -233,9 +255,9 @@ const DashboardAdmin = () => {
     };
 
     return (
-        <div className={`flex-1 bg-gray-50 p-6 h-screen overflow-hidden transition-all duration-300 ${sidebarWidth === '20' ? 'ml-20' : 'ml-64'}`}>
+        <div className={`flex-1 bg-gray-50 p-6 min-h-screen overflow-auto transition-all duration-300 ${sidebarWidth === '20' ? 'ml-20' : 'ml-64'}`}>
             <ToastContainer />
-            <DashboardHeader staffName={adminUser?.name || 'Admin'} />
+            <DashboardHeader staffName={adminUser?.name || 'Admin'} role={adminUser?.role} />
 
             <div className="h-full flex flex-col space-y-6 pt-8">
                 {/* Counters Row */}
@@ -244,7 +266,7 @@ const DashboardAdmin = () => {
                     <div className="col-span-2">
                         <div className="flex items-baseline gap-2">
                             <h3 className="text-sm font-semibold text-gray-700">Unassigned Tickets</h3>
-                            <span className="text-3xl font-bold text-[var(--hotpink)]">{unassignedTickets}</span>
+                            <span className="text-3xl font-bold text-[var(--hotpink)]">{unassignedTicketsCount}</span>
                         </div>
                     </div>
 
@@ -403,29 +425,29 @@ const DashboardAdmin = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {tickets.filter(ticket => !ticket.assignedTo).map(ticket => (
-                                        <tr key={ticket.id} className="border-b">
-                                            <td className="px-3 py-2 text-sm">{ticket.id}</td>
-                                            <td className="px-3 py-2 text-sm">{ticket.username}</td>
-                                            <td className="px-3 py-2 text-sm">{ticket.issue}</td>
-                                            <td className="px-3 py-2 text-sm">{ticket.dateIssued}</td>
+                                    {unassignedTickets.map(ticket => (
+                                        <tr key={ticket._id} className="border-b">
+                                            <td className="px-3 py-2 text-sm">{ticket._id}</td>
+                                            <td className="px-3 py-2 text-sm">{ticket.customer?.name || ticket.customer?.email || 'Unknown'}</td>
+                                            <td className="px-3 py-2 text-sm">{ticket.subject}</td>
+                                            <td className="px-3 py-2 text-sm">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : ''}</td>
                                             <td className="px-3 py-2 text-sm">
                                                 <div className="flex items-center gap-2 w-full">
                                                     <select 
                                                         className="flex-1 px-3 py-1 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hotpink)] bg-white cursor-pointer"
-                                                        value={tempStaffSelection[ticket.id] || ''}
-                                                        onChange={(e) => handleStaffSelect(ticket.id, e.target.value)}
+                                                        value={tempStaffSelection[ticket._id] || ''}
+                                                        onChange={(e) => handleStaffSelect(ticket._id, e.target.value)}
                                                     >
                                                         <option value="">Assign to...</option>
                                                         {staffMembers.map(staff => (
-                                                            <option key={staff.id} value={staff.id}>{staff.name}</option>
+                                                            <option key={staff._id} value={staff._id}>{staff.name}</option>
                                                         ))}
                                                     </select>
                                                     <button
                                                         onClick={() => handleAssignClick(ticket)}
-                                                        disabled={!tempStaffSelection[ticket.id]}
+                                                        disabled={!tempStaffSelection[ticket._id]}
                                                         className={`px-3 py-1 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
-                                                            tempStaffSelection[ticket.id]
+                                                            tempStaffSelection[ticket._id]
                                                                 ? 'bg-[var(--hotpink)] text-white hover:bg-[var(--roseberry)] cursor-pointer'
                                                                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                                         }`}
@@ -446,7 +468,7 @@ const DashboardAdmin = () => {
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold text-gray-800">Staff Overview</h2>
                             <button 
-                                onClick={() => navigate('/staff-management')}
+                                onClick={() => navigate('/manage-staff')}
                                 className="text-[var(--hotpink)] hover:text-[var(--roseberry)] transition-colors cursor-pointer"
                             >
                                 Manage Staff
@@ -457,26 +479,32 @@ const DashboardAdmin = () => {
                             <table className="w-full table-auto rounded-lg overflow-hidden border border-gray-300">
                                 <thead className="bg-[var(--hotpink)] text-white sticky top-0">
                                     <tr>
-                                        <th className="px-3 py-2 text-left text-sm w-1/4">Staff Name</th>
-                                        <th className="px-3 py-2 text-left text-sm w-1/4">Assigned</th>
-                                        <th className="px-3 py-2 text-left text-sm w-1/4">Resolved</th>
-                                        <th className="px-3 py-2 text-left text-sm w-1/4">Avg Response Time</th>
+                                        <th className="px-3 py-2 text-left text-sm w-1/5">Staff Name</th>
+                                        <th className="px-3 py-2 text-left text-sm w-1/5">Assigned</th>
+                                        <th className="px-3 py-2 text-left text-sm w-1/5">Resolved</th>
+                                        <th className="px-3 py-2 text-left text-sm w-1/5">Avg Response Time</th>
+                                        <th className="px-3 py-2 text-left text-sm w-1/5">Performance (%)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {staffPerformance.map(staff => (
-                                        <tr key={staff.id} className="border-b">
+                                        <tr key={staff._id} className="border-b">
                                             <td className="px-3 py-2 text-sm">{staff.name || staff.username || staff.email}</td>
                                             <td className="px-3 py-2 text-sm">{staff.ticketsAssigned}</td>
                                             <td className="px-3 py-2 text-sm">{staff.ticketsResolved}</td>
                                             <td className="px-3 py-2 text-sm">
                                                 <span className={`font-medium ${
-                                                    parseFloat(staff.avgResponseTime) <= 2.5 ? 'text-green-500' :
-                                                    parseFloat(staff.avgResponseTime) <= 3.0 ? 'text-yellow-500' :
-                                                    'text-red-500'
+                                                    staff.avgResponseTime !== 'N/A' ?
+                                                        (parseFloat(staff.avgResponseTime) <= 2.5 ? 'text-green-500' :
+                                                        parseFloat(staff.avgResponseTime) <= 3.0 ? 'text-yellow-500' :
+                                                        'text-red-500') :
+                                                        'text-gray-400'
                                                 }`}>
                                                     {staff.avgResponseTime}
                                                 </span>
+                                            </td>
+                                            <td className="px-3 py-2 text-sm">
+                                                {staff.performance !== 'N/A' ? `${staff.performance}%` : 'N/A'}
                                             </td>
                                         </tr>
                                     ))}

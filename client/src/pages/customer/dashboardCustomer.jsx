@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { getTickets } from '../../redux/slices/ticketSlice';
+import { getCustomerTickets } from '../../redux/slices/ticketSlice';
 import DashboardHeader from '../../components/DashboardHeader';
 import Spinner from '../../components/Spinner';
 import { format } from 'date-fns';
@@ -10,82 +10,41 @@ const DashboardCustomer = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
-    const { tickets, isLoading } = useSelector((state) => state.tickets);
+    const { customerTickets, isCustomerTicketsLoading } = useSelector((state) => state.tickets);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('all');
 
-    // Example tickets for demonstration
-    const exampleTickets = [
-        {
-            _id: '1',
-            subject: 'Kitchen Equipment Not Working',
-            status: 'in progress',
-            createdAt: new Date('2024-03-15'),
-            updatedAt: new Date('2024-03-16'),
-            description: 'The main oven is not heating properly',
-            assignedTo: { name: 'John Smith' }
-        },
-        {
-            _id: '2',
-            subject: 'New Menu Item Request',
-            status: 'new',
-            createdAt: new Date('2024-03-17'),
-            updatedAt: new Date('2024-03-17'),
-            description: 'Would like to add vegetarian options',
-            assignedTo: null
-        },
-        {
-            _id: '3',
-            subject: 'Staff Training Schedule',
-            status: 'pending',
-            createdAt: new Date('2024-03-14'),
-            updatedAt: new Date('2024-03-15'),
-            description: 'Need to schedule new staff training',
-            assignedTo: { name: 'Sarah Johnson' }
-        },
-        {
-            _id: '4',
-            subject: 'Supply Order Issue',
-            status: 'closed',
-            createdAt: new Date('2024-03-10'),
-            updatedAt: new Date('2024-03-12'),
-            description: 'Late delivery of kitchen supplies',
-            assignedTo: { name: 'Mike Brown' }
-        },
-        {
-            _id: '5',
-            subject: 'Equipment Maintenance',
-            status: 'closed',
-            createdAt: new Date('2024-03-05'),
-            updatedAt: new Date('2024-03-07'),
-            description: 'Regular maintenance check completed',
-            assignedTo: { name: 'Lisa Chen' }
-        }
-    ];
-
     useEffect(() => {
         if (user) {
-            dispatch(getTickets());
+            dispatch(getCustomerTickets());
         }
     }, [dispatch, user]);
 
+    // Utility to map status for open/closed logic
+    const mapStatusForOpenClosed = (status) => {
+        if (status === 'resolved') return 'closed';
+        return 'open'; // 'unassigned' and 'in progress' are 'open'
+    };
+
     // Filter tickets based on search query and status
-    const filteredTickets = exampleTickets.filter(ticket => {
+    const filteredTickets = customerTickets.filter(ticket => {
         const matchesSearch = searchQuery === '' || 
             ticket._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
             ticket.subject.toLowerCase().includes(searchQuery.toLowerCase());
 
-        const matchesStatus = selectedStatus === 'all' || ticket.status === selectedStatus;
+        // Map status for filtering
+        const mappedStatus = mapStatusForOpenClosed(ticket.status);
+        const matchesStatus = selectedStatus === 'all' || mappedStatus === selectedStatus;
 
         return matchesSearch && matchesStatus;
     });
 
     // Separate tickets into open and closed
     const openTickets = filteredTickets.filter(ticket => 
-        ['new', 'open', 'in progress', 'pending'].includes(ticket.status)
+        mapStatusForOpenClosed(ticket.status) === 'open'
     );
     const closedTickets = filteredTickets.filter(ticket => 
-        ticket.status === 'closed'
+        mapStatusForOpenClosed(ticket.status) === 'closed'
     );
 
     const getStatusColor = (status) => {
@@ -105,17 +64,17 @@ const DashboardCustomer = () => {
         }
     };
 
-    if (isLoading) {
+    if (isCustomerTicketsLoading) {
         return <Spinner />;
     }
 
     return (
-        <div className="flex-1 bg-gray-50 p-6 h-screen overflow-hidden ml-20">
-            <DashboardHeader staffName={user?.name || 'Customer'} />
+        <div className="flex-1 bg-gray-50 p-6 min-h-screen overflow-auto ml-20">
+            <DashboardHeader staffName={user?.name || 'Customer'} role={user?.role} />
 
-            <div className="h-full flex flex-col space-y-6 pt-8">
+            <div className="flex flex-col space-y-6 pt-8">
                 {/* Bento Grid Layout */}
-                <div className="grid grid-cols-2 gap-6 h-[35vh]">
+                <div className="grid grid-cols-2 gap-6">
                     {/* Open Tickets Bento */}
                     <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow h-full">
                         <div className="flex justify-between items-center mb-4">
@@ -216,7 +175,7 @@ const DashboardCustomer = () => {
                 </div>
 
                 {/* Second Row - Three Bento Layout */}
-                <div className="grid grid-cols-3 gap-6 h-[35vh]">
+                <div className="grid grid-cols-3 gap-6">
                     {/* Customer Support Bento */}
                     <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow flex flex-col h-full">
                         <div className="flex justify-between items-center mb-4">
@@ -230,7 +189,7 @@ const DashboardCustomer = () => {
                         </p>
                         <div className="mt-auto">
                             <button
-                                onClick={() => navigate('/custticket')}
+                                onClick={() => navigate('/mytickets', { state: { openCreateTicket: true } })}
                                 className="w-full py-3 bg-[var(--hotpink)] text-white rounded-lg hover:bg-[var(--roseberry)] transition-colors"
                             >
                                 Create New Ticket

@@ -94,7 +94,14 @@ const getTickets = async (req, res) => {
     const tickets = await Ticket.find(filter)
       .populate('customer', 'name email') // Populate customer details
       .populate('assignedTo', 'name email') // Populate assigned staff/admin details
-      .populate('category', 'categoryName'); // Populate category details
+      .populate('category', 'categoryName') // Populate category details
+      .populate({ // Populate comments and their authors
+        path: 'comments',
+        populate: {
+          path: 'author',
+          select: 'name role',
+        },
+      });
 
     res.json(tickets);
   } catch (error) {
@@ -466,4 +473,18 @@ const getAverageResponseTime = async (req, res) => {
   }
 };
 
-module.exports = { createTicket, getTickets, getTicketById, updateTicket, deleteTicket, assignTicket, uploadFileAttachment, getDailyTicketStats, getAverageResponseTime }; 
+// @desc    Get tickets for the logged-in customer
+// @route   GET /api/tickets/customer
+// @access  Customer
+const getCustomerTickets = async (req, res) => {
+  try {
+    const tickets = await Ticket.find({ customer: req.user._id })
+      .populate('assignedTo', 'name email')
+      .populate('category', 'categoryName');
+    res.json(tickets);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
+module.exports = { createTicket, getTickets, getTicketById, updateTicket, deleteTicket, assignTicket, uploadFileAttachment, getDailyTicketStats, getAverageResponseTime, getCustomerTickets }; 

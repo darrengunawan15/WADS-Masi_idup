@@ -82,13 +82,21 @@ const ManageUsers = () => {
                 bg = '#f3f4f6'; color = '#374151'; break; // gray
         }
         return {
+            container: (provided) => ({
+                ...provided,
+                minWidth: '120px',
+                maxWidth: '120px',
+                width: '120px',
+            }),
             control: (provided, state) => ({
                 ...provided,
                 backgroundColor: bg,
                 color: color,
                 borderColor: state.isFocused ? 'var(--hotpink)' : '#d1d5db',
                 boxShadow: state.isFocused ? '0 0 0 2px var(--hotpink)' : undefined,
-                minWidth: DROPDOWN_MIN_WIDTH,
+                minWidth: '120px',
+                maxWidth: '120px',
+                width: '120px',
                 minHeight: '32px',
             }),
             singleValue: (provided) => ({
@@ -289,24 +297,24 @@ const ManageUsers = () => {
 
                     {/* Users Table (Flexbox version) */}
                     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <div className="w-full">
-                                <div className="flex bg-[var(--hotpink)] text-white font-semibold text-sm sticky top-0">
-                                    <div className="flex-[1.5] px-3 py-2">User ID</div>
-                                    <div className="flex-[1.5] px-3 py-2">Username</div>
-                                    <div className="flex-[2] px-3 py-2">Email</div>
-                                    <div className="flex-[1.2] px-1 py-2">Role</div>
-                                    <div className="flex-[1.5] px-3 py-2">Date Created</div>
-                                    <div className="flex-[1.5] px-3 py-2">Last Login</div>
-                                    <div className="flex-[1.5] px-3 py-2">Status</div>
-                                </div>
+                        <div>
+                            <div className="flex bg-[var(--hotpink)] text-white font-semibold text-sm sticky top-0">
+                                <div className="flex-[1.5] px-3 py-2">User ID</div>
+                                <div className="flex-[1.5] px-3 py-2">Username</div>
+                                <div className="flex-[2] px-3 py-2">Email</div>
+                                <div className="flex-[1.2] px-1 py-2">Role</div>
+                                <div className="flex-[1.5] px-3 py-2">Date Created</div>
+                                <div className="flex-[1.5] px-3 py-2">Last Login</div>
+                                <div className="flex-[1.5] px-3 py-2">Status</div>
+                            </div>
+                            <div className="w-full rounded-lg">
                                 {filteredUsers.map((user) => (
                                     <div key={user._id} className="flex border-b group relative hover:bg-gray-50 items-center text-sm">
                                         <div className="flex-[1.5] px-3 py-2 truncate">{user._id}</div>
                                         <div className="flex-[1.5] px-3 py-2 truncate">{user.username || user.name}</div>
                                         <div className="flex-[2] px-3 py-2 truncate">{user.email}</div>
                                         <div className="flex-[1.2] px-0 py-2 whitespace-nowrap w-0">
-                                            <div className="relative w-full flex items-center justify-start">
+                                            <div className="inline-flex items-center -ml-6">
                                                 <Select
                                                     classNamePrefix="role-select"
                                                     value={roleOptions.find(opt => opt.value === (pendingRoleChanges[user._id] || user.role))}
@@ -319,7 +327,7 @@ const ManageUsers = () => {
                                                 {(pendingRoleChanges[user._id] && pendingRoleChanges[user._id] !== user.role) && (
                                                     <button
                                                         type="button"
-                                                        className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-[var(--hotpink)] text-white rounded hover:bg-[var(--roseberry)] text-xs whitespace-nowrap z-10 shadow-lg"
+                                                        className="ml-1 px-2 py-1 bg-[var(--hotpink)] text-white rounded hover:bg-[var(--roseberry)] text-xs whitespace-nowrap z-50 shadow-lg"
                                                         onClick={() => handleRoleConfirm(user)}
                                                     >
                                                         Confirm
@@ -330,22 +338,20 @@ const ManageUsers = () => {
                                         <div className="flex-[1.5] px-3 py-2 truncate">{user.createdAt ? format(new Date(user.createdAt), 'yyyy-MM-dd') : ''}</div>
                                         <div className="flex-[1.5] px-3 py-2 truncate">{user.updatedAt ? format(new Date(user.updatedAt), 'yyyy-MM-dd') : ''}</div>
                                         <div className="flex-[1.5] px-3 py-2">
-                                            <div className="relative w-full flex items-center justify-start">
-                                                <div className="w-full" style={{ minWidth: DROPDOWN_MIN_WIDTH, maxWidth: DROPDOWN_MIN_WIDTH }}>
-                                                    <Select
-                                                        classNamePrefix="status-select"
-                                                        value={statusOptions.find(opt => opt.value === (pendingStatusChanges[user._id] || user.status))}
-                                                        onChange={opt => handleStatusChange(user, opt.value)}
-                                                        options={statusOptions}
-                                                        styles={getStatusStyles(pendingStatusChanges[user._id] || user.status)}
-                                                        isSearchable={false}
-                                                        menuPlacement="auto"
-                                                    />
-                                                </div>
+                                            <div className="inline-flex items-center -ml-6">
+                                                <Select
+                                                    classNamePrefix="status-select"
+                                                    value={statusOptions.find(opt => opt.value === (pendingStatusChanges[user._id] || user.status))}
+                                                    onChange={opt => handleStatusChange(user, opt.value)}
+                                                    options={statusOptions}
+                                                    styles={getStatusStyles(pendingStatusChanges[user._id] || user.status)}
+                                                    isSearchable={false}
+                                                    menuPlacement="auto"
+                                                />
                                                 {(pendingStatusChanges[user._id] && pendingStatusChanges[user._id] !== user.status) && (
                                                     <button
                                                         type="button"
-                                                        className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-[var(--hotpink)] text-white rounded hover:bg-[var(--roseberry)] text-xs whitespace-nowrap z-10 shadow-lg"
+                                                        className="ml-1 px-2 py-1 bg-[var(--hotpink)] text-white rounded hover:bg-[var(--roseberry)] text-xs whitespace-nowrap z-50 shadow-lg"
                                                         onClick={() => handleStatusConfirm(user)}
                                                     >
                                                         Confirm

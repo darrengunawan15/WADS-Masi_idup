@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getTickets, getTicket, addComment, reset } from '../../redux/slices/ticketSlice';
 import Spinner from '../../components/Spinner';
 import { format } from 'date-fns';
+import axios from 'axios';
+import ticketService from '../../services/ticketService';
 
 const ChatSupport = () => {
     const navigate = useNavigate();
@@ -15,17 +17,28 @@ const ChatSupport = () => {
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const [contextMenu, setContextMenu] = useState({ show: false, x: 0, y: 0, chatId: null });
+    const [aiMessages, setAiMessages] = useState([]);
 
     const dispatch = useDispatch();
     const { tickets, ticket: activeTicket, isLoading, isError, message: ticketError } = useSelector((state) => state.tickets);
     const { user } = useSelector((state) => state.auth);
 
     useEffect(() => {
-        dispatch(getTickets());
+        const fetchTickets = async () => {
+            if (user?.role === 'customer') {
+                // Use getCustomerTickets for customers
+                const token = localStorage.getItem('accessToken');
+                const customerTickets = await ticketService.getCustomerTickets(token);
+                dispatch({ type: 'tickets/getAll/fulfilled', payload: customerTickets });
+            } else {
+                dispatch(getTickets());
+            }
+        };
+        fetchTickets();
         return () => {
             dispatch(reset());
         };
-    }, [dispatch]);
+    }, [dispatch, user]);
 
     useEffect(() => {
         if (activeTicketId) {
@@ -74,19 +87,45 @@ const ChatSupport = () => {
         scrollToBottom();
     }, [activeTicket?.comments]);
 
-    const handleSendMessage = (e) => {
+    useEffect(() => {
+        // If not in AI chat, no ticket selected, and there are tickets, select the first ticket by default
+        if (!isAIChat && !activeTicketId && tickets && tickets.length > 0) {
+            setActiveTicketId(tickets[0]._id);
+        }
+    }, [isAIChat, activeTicketId, tickets]);
+
+    useEffect(() => {
+        // If AI chat is selected and there are no AI messages, show a local greeting from the AI
+        if (isAIChat && aiMessages.length === 0) {
+            setAiMessages([{ sender: 'ai', content: 'Hello! How can I assist you today?' }]);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAIChat]);
+
+    const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!message.trim()) return;
 
         if (isAIChat) {
-            // TODO: Implement AI chat message handling
-            console.log('AI chat message:', message);
+            setAiMessages(prev => [...prev, { sender: 'user', content: message }]);
+            try {
+                const response = await axios.post('/api/ai-chat', {
+                    message // Only send the message field
+                });
+                // Denser AI returns { answer: "..." }
+                const aiReply = response.data.answer || 'Sorry, I could not understand that.';
+                setAiMessages(prev => [...prev, { sender: 'ai', content: aiReply }]);
+            } catch (err) {
+                console.error('AI API error:', err.response ? err.response.data : err);
+                setAiMessages(prev => [...prev, { sender: 'ai', content: 'Sorry, there was an error contacting the AI: ' + (err.response?.data?.error || err.message) }]);
+            }
         } else if (activeTicketId) {
             const commentData = {
                 content: message,
                 ticketId: activeTicketId,
             };
-            dispatch(addComment(commentData));
+            await dispatch(addComment(commentData));
+            await dispatch(getTicket(activeTicketId));
         }
         setMessage('');
     };
@@ -113,6 +152,8 @@ const ChatSupport = () => {
     if (isLoading) {
         return <Spinner />;
     }
+
+    console.log('activeTicket.comments:', activeTicket?.comments);
 
     return (
         <div className={`fixed inset-0 bg-gray-50 transition-all duration-300 ${sidebarWidth === '20' ? 'ml-20' : 'ml-64'}`}>
@@ -166,90 +207,7 @@ const ChatSupport = () => {
                             </div>
                         </div>
 
-                        {/* Example Staff Members */}
-                        <div
-                            onClick={() => {
-                                setActiveTicketId('staff-1');
-                                setIsAIChat(false);
-                            }}
-                            className={`p-4 cursor-pointer transition-all duration-200 ${
-                                activeTicketId === 'staff-1' 
-                                    ? 'bg-pink-100 border-l-4 border-[var(--hotpink)]' 
-                                    : 'hover:bg-gray-50 border-l-4 border-transparent'
-                            }`}
-                        >
-                            <div className="flex items-center space-x-4">
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl text-white shadow-md ${
-                                    activeTicketId === 'staff-1'
-                                        ? 'bg-[var(--hotpink)]'
-                                        : 'bg-gradient-to-br from-[var(--hotpink)] to-[var(--roseberry)]'
-                                }`}>
-                                    S
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-start">
-                                        <h3 className={`text-sm font-semibold truncate ${
-                                            activeTicketId === 'staff-1' ? 'text-gray-900' : 'text-gray-900'
-                                        }`}>
-                                            Sarah Johnson
-                                        </h3>
-                                        <span className={`text-xs ${
-                                            activeTicketId === 'staff-1' ? 'text-gray-600' : 'text-gray-500'
-                                        }`}>
-                                            Online
-                                        </span>
-                                    </div>
-                                    <p className={`text-sm truncate ${
-                                        activeTicketId === 'staff-1' ? 'text-gray-700' : 'text-gray-500'
-                                    }`}>
-                                        Technical Support Specialist
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div
-                            onClick={() => {
-                                setActiveTicketId('staff-2');
-                                setIsAIChat(false);
-                            }}
-                            className={`p-4 cursor-pointer transition-all duration-200 ${
-                                activeTicketId === 'staff-2' 
-                                    ? 'bg-pink-100 border-l-4 border-[var(--hotpink)]' 
-                                    : 'hover:bg-gray-50 border-l-4 border-transparent'
-                            }`}
-                        >
-                            <div className="flex items-center space-x-4">
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl text-white shadow-md ${
-                                    activeTicketId === 'staff-2'
-                                        ? 'bg-[var(--hotpink)]'
-                                        : 'bg-gradient-to-br from-[var(--hotpink)] to-[var(--roseberry)]'
-                                }`}>
-                                    M
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-start">
-                                        <h3 className={`text-sm font-semibold truncate ${
-                                            activeTicketId === 'staff-2' ? 'text-gray-900' : 'text-gray-900'
-                                        }`}>
-                                            Mike Chen
-                                        </h3>
-                                        <span className={`text-xs ${
-                                            activeTicketId === 'staff-2' ? 'text-gray-600' : 'text-gray-500'
-                                        }`}>
-                                            Online
-                                        </span>
-                                    </div>
-                                    <p className={`text-sm truncate ${
-                                        activeTicketId === 'staff-2' ? 'text-gray-700' : 'text-gray-500'
-                                    }`}>
-                                        Customer Success Manager
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Human Support Tickets */}
+                        {/* Human Support Tickets (from backend only) */}
                         {tickets.map((ticket) => (
                             <div
                                 key={ticket._id}
@@ -314,12 +272,14 @@ const ChatSupport = () => {
                             </div>
 
                             {/* AI Messages Area */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                                <div className="flex justify-start">
-                                    <div className="max-w-[70%] rounded-2xl p-4 bg-white text-gray-800 shadow-sm">
-                                        <p className="text-sm">Hello! I'm your AI assistant. How can I help you today?</p>
+                            <div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50">
+                                {aiMessages.map((msg, idx) => (
+                                    <div key={idx} className={`mb-4 flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`rounded-lg px-4 py-2 max-w-xs ${msg.sender === 'user' ? 'bg-[var(--hotpink)] text-white' : 'bg-white text-gray-800 border'}`}>
+                                            {msg.content}
+                                        </div>
                                     </div>
-                                </div>
+                                ))}
                                 <div ref={messagesEndRef} />
                             </div>
 
@@ -328,7 +288,7 @@ const ChatSupport = () => {
                                 <form onSubmit={handleSendMessage} className="flex items-center space-x-4">
                                     <input
                                         type="text"
-                                        value={message}
+                                        value={message || ''}
                                         onChange={(e) => setMessage(e.target.value)}
                                         placeholder="Type a message..."
                                         className="flex-1 px-4 py-2 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-[var(--hotpink)] focus:border-transparent"
@@ -360,25 +320,11 @@ const ChatSupport = () => {
                             </div>
 
                             {/* Messages Area */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
-                                {activeTicket.comments && activeTicket.comments.map((comment) => (
-                                    <div
-                                        key={comment._id}
-                                        className={`flex ${comment.author?._id === user?._id ? 'justify-end' : 'justify-start'}`}
-                                    >
-                                        <div
-                                            className={`max-w-[70%] rounded-2xl p-4 shadow-sm ${
-                                                comment.author?._id === user?._id
-                                                    ? 'bg-[var(--hotpink)] text-white'
-                                                    : 'bg-white text-gray-800'
-                                            }`}
-                                        >
-                                            <p className="text-sm">{comment.content}</p>
-                                            <span className={`text-xs mt-1 block ${
-                                                comment.author?._id === user?._id ? 'text-white text-opacity-70' : 'text-gray-500'
-                                            }`}>
-                                                {comment.createdAt ? format(new Date(comment.createdAt), 'MMM d, h:mm a') : 'N/A'}
-                                            </span>
+                            <div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50">
+                                {(activeTicket?.comments || []).map((comment, idx) => (
+                                    <div key={comment._id || idx} className={`mb-4 flex ${comment.author && comment.author._id === user._id ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`rounded-lg px-4 py-2 max-w-xs ${comment.author && comment.author._id === user._id ? 'bg-[var(--hotpink)] text-white' : 'bg-white text-gray-800 border'}`}>
+                                            {comment.content}
                                         </div>
                                     </div>
                                 ))}
@@ -406,7 +352,7 @@ const ChatSupport = () => {
                                     </button>
                                     <input
                                         type="text"
-                                        value={message}
+                                        value={message || ''}
                                         onChange={(e) => setMessage(e.target.value)}
                                         placeholder="Type a message..."
                                         className="flex-1 px-4 py-2 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-[var(--hotpink)] focus:border-transparent"

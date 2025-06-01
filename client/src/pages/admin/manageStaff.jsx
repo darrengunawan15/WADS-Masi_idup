@@ -70,28 +70,20 @@ const ManageStaff = () => {
     // Calculate ticket stats for each staff
     const staffWithStats = filteredStaff.map(staff => {
         const assigned = tickets.filter(ticket => ticket.assignedTo && ticket.assignedTo._id === staff._id).length;
-        const resolved = tickets.filter(ticket => ticket.assignedTo && ticket.assignedTo._id === staff._id && ticket.status === 'closed').length;
+        const resolved = tickets.filter(ticket => ticket.assignedTo && ticket.assignedTo._id === staff._id && ticket.status === 'resolved').length;
+        let performance = 'N/A';
+        if (assigned > 0) {
+            performance = `${resolved}/${assigned} (${((resolved / assigned) * 100).toFixed(1)}%)`;
+        } else {
+            performance = '0/0 (N/A)';
+        }
         return {
             ...staff,
             ticketsAssigned: assigned,
             ticketsResolved: resolved,
+            performance,
         };
     });
-
-    const getPerformanceColor = (performance) => {
-        switch ((performance || '').toLowerCase()) {
-            case 'excellent':
-                return 'bg-green-100 text-green-800';
-            case 'good':
-                return 'bg-blue-100 text-blue-800';
-            case 'average':
-                return 'bg-yellow-100 text-yellow-800';
-            case 'poor':
-                return 'bg-red-100 text-red-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
 
     if (isLoading) {
         return <Spinner />;
@@ -141,9 +133,7 @@ const ManageStaff = () => {
                                             <td className="px-3 py-2 text-sm truncate">{staff.username || staff.name}</td>
                                             <td className="px-3 py-2 text-sm truncate">{staff.email}</td>
                                             <td className="px-3 py-2 text-sm">
-                                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs ${getPerformanceColor(staff.performance)}`}>
-                                                    {staff.performance}
-                                                </span>
+                                                {staff.performance}
                                             </td>
                                             <td className="px-3 py-2 text-sm">
                                                 <div className="flex flex-col">

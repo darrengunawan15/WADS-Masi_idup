@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createTicket, getTickets, getTicketById, updateTicket, deleteTicket, assignTicket, uploadFileAttachment, getDailyTicketStats, getAverageResponseTime } = require('../controllers/ticketController');
+const { createTicket, getTickets, getTicketById, updateTicket, deleteTicket, assignTicket, uploadFileAttachment, getDailyTicketStats, getAverageResponseTime, getCustomerTickets } = require('../controllers/ticketController');
 const { addComment, getComments } = require('../controllers/commentController'); // Import comment controller functions
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { check } = require('express-validator'); // Import check
@@ -140,6 +140,9 @@ router.route('/')
     check('category', 'Invalid category ID').optional().isMongoId(),
   ], createTicket) // Only authenticated users (customers) can create tickets, with validation
   .get(protect, authorize(['staff', 'admin']), getTickets); // Only staff and admin can get all tickets
+
+// Route for customers to get their own tickets
+router.get('/customer', protect, getCustomerTickets);
 
 /**
  * @swagger
