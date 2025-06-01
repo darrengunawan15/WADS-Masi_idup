@@ -4,6 +4,7 @@ const connectDB = require('./config/db');
 const userRoutes = require('./routes/userRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const swaggerUi = require('swagger-ui-express');
@@ -67,6 +68,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
 // Ticket routes
 app.use('/api/tickets', ticketRoutes);
+// AI chat proxy route
+app.use('/api', aiRoutes);
 
 // Serve Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -77,4 +80,4 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`)); 
+app.listen(PORT, () => console.log(`Server running on port http://localhost:${PORT}`)); 

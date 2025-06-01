@@ -65,6 +65,24 @@ const uploadFile = async (ticketId, fileData, token) => {
     return response.data;
 };
 
+// Get daily ticket statistics
+const getDailyTicketStats = async (token) => {
+    const response = await axios.get(API_URL + 'stats/daily', authHeader(token));
+    return response.data;
+};
+
+// Get average response time statistics
+const getAverageResponseTime = async (token) => {
+    const response = await axios.get(API_URL + 'stats/response-time', authHeader(token));
+    return response.data;
+};
+
+// Get tickets for the logged-in customer
+const getCustomerTickets = async (token) => {
+  const response = await axios.get(API_URL + 'customer', authHeader(token));
+  return response.data;
+};
+
 const ticketService = {
   createTicket,
   getTickets,
@@ -74,6 +92,9 @@ const ticketService = {
   addComment,
   getComments,
   uploadFile,
+  getDailyTicketStats,
+  getAverageResponseTime,
+  getCustomerTickets,
 };
 
 export default ticketService; 

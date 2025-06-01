@@ -1,64 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { login, reset } from '../redux/slices/authSlice';
-import imgplaceholder from '../assets/img-placeholder.webp'; 
+import imgplaceholder from '../../assets/img-placeholder.webp';
+import { useDispatch, useSelector } from 'react-redux';
+import { register, reset } from '../../redux/slices/authSlice';
 
-const Login = () => {
-    const [formData, setFormData] = useState({
-        email: '',
-        password: '',
-    });
-
-    const { email, password } = formData;
+const CreateAccount = () => {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
     const navigate = useNavigate();
     const dispatch = useDispatch();
-
-    const { user, isLoading, isError, isSuccess, message } = useSelector(
-        (state) => state.auth
-    );
+    const { isSuccess } = useSelector((state) => state.auth);
 
     useEffect(() => {
-        if (isError) {
-            console.log(message); // You might want to display this in the UI
-        }
-
-        // Redirect based on role when logged in successfully
         if (isSuccess) {
-            if (user && user.role === 'staff') {
-                navigate('/dashboard-staff');
-            } else if (user && user.role === 'admin') {
-                navigate('/dashboard-admin');
-            } else {
-                // Default redirect for customers or other roles
-                navigate('/');
-            }
+            navigate('/login');
+            dispatch(reset());
         }
+    }, [isSuccess, navigate, dispatch]);
 
-        dispatch(reset());
-    }, [user, isError, isSuccess, message, navigate, dispatch]);
-
-    const onChange = (e) => {
-        setFormData((prevState) => ({
-            ...prevState,
-            [e.target.name]: e.target.value,
-        }));
-    };
-
-    const onSubmit = (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
-
-        const userData = {
-            email,
-            password,
-        };
-
-        dispatch(login(userData));
+        dispatch(register({ name, email, password, role: 'customer' }));
     };
 
-    const redirectToCreateAccount = () => {
-        navigate('/create-account'); 
+    const redirectToLogin = () => {
+        navigate('/login'); 
     };
 
     return (
@@ -71,19 +39,29 @@ const Login = () => {
 
                 <div className="w-full sm:w-1/2 p-8 flex justify-center items-center bg-gray-50 rounded-r-lg">
                     <div className="w-full max-w-md space-y-6">
-                        <h2 className="text-2xl font-bold text-center text-[var(--blush)]">Log In</h2>
+                        <h2 className="text-2xl font-bold text-center text-[var(--blush)]">Create Account</h2>
 
-                        <form onSubmit={onSubmit} className="space-y-4">
+                        <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
-                                    Email Address
-                                </label>
+                                <label htmlFor="name" className="block text-sm font-semibold text-gray-700">Full Name</label>
+                                <input
+                                    type="text"
+                                    id="name"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="mt-2 p-3 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--blush)]"
+                                    placeholder="Enter your full name"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="email" className="block text-sm font-semibold text-gray-700">Email Address</label>
                                 <input
                                     type="email"
                                     id="email"
-                                    name="email"
                                     value={email}
-                                    onChange={onChange}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     className="mt-2 p-3 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--blush)]"
                                     placeholder="Enter your email"
                                     required
@@ -91,17 +69,14 @@ const Login = () => {
                             </div>
 
                             <div>
-                                <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
-                                    Password
-                                </label>
+                                <label htmlFor="password" className="block text-sm font-semibold text-gray-700">Password</label>
                                 <input
                                     type="password"
                                     id="password"
-                                    name="password"
                                     value={password}
-                                    onChange={onChange}
+                                    onChange={(e) => setPassword(e.target.value)}
                                     className="mt-2 p-3 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--blush)]"
-                                    placeholder="Enter your password"
+                                    placeholder="Create a password"
                                     required
                                 />
                             </div>
@@ -110,21 +85,21 @@ const Login = () => {
                                 type="submit"
                                 className="w-full py-3 bg-[var(--blush)] text-white rounded-md text-lg font-semibold hover:bg-[var(--roseberry)] transition-colors"
                             >
-                                Log In
+                                Create Account
                             </button>
 
                             <button
                                 type="button"
                                 className="w-full py-3 bg-red-500 text-white rounded-md text-lg font-semibold mt-4 hover:bg-red-600 transition-colors"
                             >
-                                Sign in with Google
+                                Sign up with Google
                             </button>
                         </form>
 
                         <div className="text-center text-sm text-gray-600 mt-4">
-                            <span>Don't have an account? </span>
-                            <button onClick={redirectToCreateAccount} className="text-[var(--blush)] hover:underline">
-                                Create an account
+                            <span>Already have an account? </span>
+                            <button onClick={redirectToLogin} className="text-[var(--blush)] hover:underline">
+                                Log in
                             </button>
                         </div>
                     </div>
@@ -134,4 +109,4 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default CreateAccount;

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/react.svg';
 
-const NavbarAdmin = () => {
+const NavbarCustomer = () => {
     const navigate = useNavigate();
     const [isCollapsed, setIsCollapsed] = useState(true);
     const sidebarRef = useRef(null);
@@ -20,27 +20,22 @@ const NavbarAdmin = () => {
 
     const handleLogoClick = () => {
         setIsCollapsed(true);
-        navigate('/dashboard-admin');
+        navigate('/dashboard-customer');
     };
 
     const handleDashboardClick = () => {
         setIsCollapsed(true);
-        navigate('/dashboard-admin');
+        navigate('/dashboard-customer');
     };
 
-    const handleAssignTicketsClick = () => {
+    const handleNewTicketClick = () => {
         setIsCollapsed(true);
-        navigate('/assign-tickets');
+        navigate('/mytickets');
     };
 
-    const handleManageStaffClick = () => {
+    const handleSupportClick = () => {
         setIsCollapsed(true);
-        navigate('/manage-staff');
-    };
-
-    const handleManageUsersClick = () => {
-        setIsCollapsed(true);
-        navigate('/manage-users');
+        navigate('/chat-support');
     };
 
     const handleSidebarClick = () => {
@@ -94,13 +89,15 @@ const NavbarAdmin = () => {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleAssignTicketsClick();
+                                    handleNewTicketClick();
                                 }}
-                                className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 text-[var(--roseberry)] font-semibold cursor-pointer"
+                                className={`w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 text-[var(--roseberry)] font-semibold cursor-pointer ${
+                                    location.pathname === '/mytickets' ? 'bg-gray-100' : ''
+                                }`}
                             >
-                                <span className="text-xl w-6 flex items-center justify-center flex-shrink-0">🎫</span>
+                                <span className="text-xl w-6 flex items-center justify-center flex-shrink-0">📝</span>
                                 <span className={textTransitionClass}>
-                                    Assign Tickets
+                                    My Tickets
                                 </span>
                             </button>
                         </li>
@@ -108,27 +105,13 @@ const NavbarAdmin = () => {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleManageStaffClick();
+                                    handleSupportClick();
                                 }}
                                 className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 text-[var(--roseberry)] font-semibold cursor-pointer"
                             >
-                                <span className="text-xl w-6 flex items-center justify-center flex-shrink-0">👥</span>
+                                <span className="text-xl w-6 flex items-center justify-center flex-shrink-0">💬</span>
                                 <span className={textTransitionClass}>
-                                    Manage Staff
-                                </span>
-                            </button>
-                        </li>
-                        <li>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleManageUsersClick();
-                                }}
-                                className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 text-[var(--roseberry)] font-semibold cursor-pointer"
-                            >
-                                <span className="text-xl w-6 flex items-center justify-center flex-shrink-0">👤</span>
-                                <span className={textTransitionClass}>
-                                    Manage Users
+                                    Customer Support
                                 </span>
                             </button>
                         </li>
@@ -139,4 +122,4 @@ const NavbarAdmin = () => {
     );
 };
 
-export default NavbarAdmin;
+export default NavbarCustomer; 

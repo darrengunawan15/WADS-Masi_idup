@@ -32,6 +32,7 @@ const Navbar = () => {
                     <div className="flex space-x-8 text-[var(--roseberry)] text-lg font-semibold h-1/2 items-center">
                         <a href="#" className="hover:underline">About Us</a>
                         <a href="#" className="hover:underline">FAQs</a>
+                        <a href="#" className="hover:underline">Our Products</a>
                         <a href="#" className="hover:underline">Discover Us</a>
                     </div>
                 </div>

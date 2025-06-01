@@ -6,20 +6,23 @@ const { validationResult } = require('express-validator'); // Import validationR
 // @route   POST /api/tickets/:ticketId/comments
 // @access  Authenticated User (Customer, Staff, Admin)
 const addComment = async (req, res) => {
-  // Check for validation errors
+  // Re-add validation check relying on express.json()
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.error('Validation errors in addComment:', errors.array());
     return res.status(400).json({ errors: errors.array() });
   }
 
+  // Revert to getting content from req.body
   const { content } = req.body;
   const ticketId = req.params.ticketId;
   const authorId = req.user._id; // Get author ID from authenticated user
   const userRole = req.user.role;
 
+  // This check should now be handled by express-validator, but keep for safety
   if (!content) {
-    res.status(400).json({ message: 'Please provide comment content' });
-    return;
+     res.status(400).json({ message: 'Please provide comment content' });
+     return;
   }
 
   try {
