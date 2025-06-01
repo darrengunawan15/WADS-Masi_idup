@@ -200,13 +200,27 @@ const updateTicket = async (req, res) => {
     if (isStaffOrAdmin) {
       ticket.subject = subject || ticket.subject;
       ticket.description = description || ticket.description;
-      ticket.status = status || ticket.status;
+      if (status) {
+        ticket.status = status;
+        // Set resolvedAt when status is changed to resolved
+        if (status === 'resolved') {
+          ticket.resolvedAt = new Date();
+        } else {
+          ticket.resolvedAt = null;
+        }
+      }
       ticket.assignedTo = assignedTo || ticket.assignedTo;
       ticket.category = category || ticket.category;
     } else if (isCustomerOwner) {
         // Customer can only update status (if you want to allow this)
         if (status) {
             ticket.status = status;
+            // Set resolvedAt when status is changed to resolved
+            if (status === 'resolved') {
+              ticket.resolvedAt = new Date();
+            } else {
+              ticket.resolvedAt = null;
+            }
         } else if (subject || description || assignedTo || category) {
              res.status(403).json({ message: 'Customers can only update ticket status' });
              return;
@@ -302,22 +316,24 @@ const assignTicket = async (req, res) => {
         return;
     }
 
+    // Update the ticket with the new assignedTo value
     ticket.assignedTo = assignedTo;
+    ticket.status = 'in progress';
     const updatedTicket = await ticket.save();
 
-     // Populate the updated ticket for the response
+    // Populate the updated ticket for the response
     const populatedTicket = await Ticket.findById(updatedTicket._id)
         .populate('customer', 'name email')
         .populate('assignedTo', 'name email')
         .populate('category', 'categoryName')
-         .populate({ // Populate comments and their authors
+        .populate({ // Populate comments and their authors
             path: 'comments',
             populate: {
-              path: 'author',
-              select: 'name role',
+                path: 'author',
+                select: 'name role',
             },
-          })
-        .populate('fileAttachments', 'fileName link'); // Populate file attachments
+        })
+        .populate('fileAttachments', 'fileName link');
 
     res.json(populatedTicket);
   } catch (error) {

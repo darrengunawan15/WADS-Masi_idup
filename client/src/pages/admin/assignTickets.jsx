@@ -133,7 +133,7 @@ const AssignTickets = () => {
         switch (status) {
             case 'unassigned':
                 return 'bg-yellow-100 text-yellow-800';
-            case 'in-progress':
+            case 'in progress':
                 return 'bg-blue-100 text-blue-800';
             case 'resolved':
                 return 'bg-green-100 text-green-800';
@@ -191,7 +191,7 @@ const AssignTickets = () => {
                         >
                             <option value="all">All Status</option>
                             <option value="unassigned">Unassigned</option>
-                            <option value="in-progress">In Progress</option>
+                            <option value="in progress">In Progress</option>
                             <option value="resolved">Resolved</option>
                         </select>
                     </div>
@@ -298,19 +298,23 @@ const AssignTickets = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <p><span className="font-medium text-gray-600">Ticket ID:</span></p>
-                                        <p><span className="font-medium text-gray-600">Customer ID:</span></p>
-                                        <p><span className="font-medium text-gray-600">Username:</span></p>
+                                        <p><span className="font-medium text-gray-600">Customer Name:</span></p>
+                                        <p><span className="font-medium text-gray-600">Assigned To:</span></p>
                                         <p><span className="font-medium text-gray-600">Status:</span></p>
-                                        <p><span className="font-medium text-gray-600">Created:</span></p>
+                                        <p><span className="font-medium text-gray-600">Date:</span></p>
                                     </div>
                                     <div className="space-y-2">
                                         <p>{selectedTicket._id}</p>
-                                        <p>{selectedTicket.customer?.name || ''}</p>
-                                        <p>{selectedTicket.customer?.username || ''}</p>
+                                        <p>{selectedTicket.customer?.name || 'N/A'}</p>
+                                        <p>{selectedTicket.assignedTo?.name || 'Unassigned'}</p>
                                         <p className={`inline-block px-2 py-0.5 rounded-full text-xs ${getStatusColor(selectedTicket.status)}`}>
                                             {selectedTicket.status.charAt(0).toUpperCase() + selectedTicket.status.slice(1)}
                                         </p>
-                                        <p>{selectedTicket.createdAt}</p>
+                                        <p>{new Date(selectedTicket.createdAt).toLocaleDateString('en-GB', {
+                                            day: '2-digit',
+                                            month: 'long',
+                                            year: 'numeric'
+                                        })}</p>
                                     </div>
                                 </div>
                                 <div className="pt-4 border-t">

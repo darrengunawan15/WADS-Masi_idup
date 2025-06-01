@@ -87,19 +87,13 @@ const DashboardStaff = () => {
 
     // Calculate ticket status counts from fetched data
     const calculatedStatusCounts = staffTickets.reduce((counts, ticket) => {
-        if (ticket.status === 'open') {
-            counts.open++;
-        } else if (ticket.status === 'in progress') {
+        if (ticket.status === 'in progress') {
             counts.inProgress++;
-        } else if (ticket.status === 'closed') {
-            counts.closed++;
-        } else if (ticket.status === 'new') { // Assuming 'new' is a possible status
-            counts.new++;
-        } else if (ticket.status === 'pending') { // Assuming 'pending' is a possible status
-            counts.pending++;
-        }
+        } else if (ticket.status === 'resolved') {
+            counts.resolved++;
+        } 
         return counts;
-    }, { open: 0, inProgress: 0, closed: 0, new: 0, pending: 0 }); // Initialize counts
+    }, { inProgress: 0, resolved: 0 }); // Initialize counts
 
     // You can keep mock data for monthly tickets if you don't have a backend endpoint for that
     const thisMonthTickets = 156; // Keep mock for now
@@ -112,12 +106,9 @@ const DashboardStaff = () => {
     ];
 
     const totalStaffTickets = staffTickets.length;
-    // Unsolved tickets are typically 'open', 'in progress', 'new', 'pending'
+    
     const unsolvedStaffTickets = staffTickets.filter(ticket => 
-        ticket.status === 'open' || 
-        ticket.status === 'in progress' ||
-        ticket.status === 'new' ||
-        ticket.status === 'pending'
+        ticket.status === 'in progress' 
     ).length;
 
     const totalMessages = messages.length;
@@ -132,46 +123,47 @@ const DashboardStaff = () => {
         datasets: [{
             label: 'Tickets per Day',
             data: dailyStats.map(stat => stat.count),
-            backgroundColor: 'rgba(255, 99, 132, 0.5)',
-            borderColor: 'rgb(255, 99, 132)',
+            backgroundColor: 'rgba(255, 105, 180, 0.5)', // Hot pink with opacity
+            borderColor: 'rgb(255, 105, 180)', // Hot pink
+            borderWidth: 1
+        }]
+    };
+
+    // Staff's tickets per day data
+    const staffTicketsPerDayData = {
+        labels: dailyStats.map(stat => format(new Date(stat._id), 'MMM dd')),
+        datasets: [{
+            label: 'Your Tickets per Day',
+            data: dailyStats.map(stat => {
+                // Filter tickets for this staff member on this day
+                const staffTicketsOnDay = staffTickets.filter(ticket => 
+                    format(new Date(ticket.createdAt), 'MMM dd') === format(new Date(stat._id), 'MMM dd')
+                );
+                return staffTicketsOnDay.length;
+            }),
+            backgroundColor: 'rgba(255, 105, 180, 0.5)', // Hot pink with opacity
+            borderColor: 'rgb(255, 105, 180)', // Hot pink
             borderWidth: 1
         }]
     };
 
     const ticketStatusData = {
-        labels: ['New', 'Open', 'In Progress', 'Pending', 'Closed'], // Updated labels
+        labels: ['In Progress', 'Resolved'],
         datasets: [{
-            data: [calculatedStatusCounts.new, calculatedStatusCounts.open, calculatedStatusCounts.inProgress, calculatedStatusCounts.pending, calculatedStatusCounts.closed], // Use calculated data
+            data: [calculatedStatusCounts.inProgress, calculatedStatusCounts.resolved],
             backgroundColor: [
-                'rgba(54, 162, 235, 0.5)', // Blue for New
-                'rgba(255, 159, 64, 0.5)', // Orange for Open
-                'rgba(75, 192, 192, 0.5)', // Green for In Progress
-                'rgba(255, 205, 86, 0.5)', // Yellow for Pending
-                'rgba(153, 102, 255, 0.5)', // Purple for Closed
+                'rgba(255, 105, 180, 0.5)', // Pink for In Progress
+                'rgba(75, 192, 192, 0.5)', // Green for Resolved
             ],
             borderColor: [
-                'rgb(54, 162, 235)',
-                'rgb(255, 159, 64)',
-                'rgb(75, 192, 192)',
-                'rgb(255, 205, 86)',
-                'rgb(153, 102, 255)',
+                'rgb(255, 105, 180)', // Pink for In Progress
+                'rgb(75, 192, 192)', // Green for Resolved
             ],
             borderWidth: 1
         }]
     };
 
-    const responseTimeData = {
-        labels: averageResponseTime.map(stat => format(new Date(stat._id), 'MMM dd')),
-        datasets: [{
-            label: 'Average Response Time (hours)',
-            data: averageResponseTime.map(stat => stat.averageResponseTimeHours),
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            tension: 0.1
-        }]
-    };
-
-    if (isLoading || isStatsLoading || isResponseTimeLoading) {
+    if (isLoading || isStatsLoading) {
         return <Spinner />;
     }
 
@@ -234,24 +226,12 @@ const DashboardStaff = () => {
                             <h3 className="text-sm font-semibold text-gray-700 mb-3">Ticket Status</h3>
                             <div className="flex gap-6">
                                 <div className="flex flex-col items-center">
-                                    <span className="text-sm text-gray-600">New</span>
-                                    <span className="text-lg font-semibold text-blue-500">{calculatedStatusCounts.new}</span>
-                                </div>
-                                <div className="flex flex-col items-center">
-                                    <span className="text-sm text-gray-600">Open</span>
-                                    <span className="text-lg font-semibold text-[var(--hotpink)]">{calculatedStatusCounts.open}</span>
-                                </div>
-                                <div className="flex flex-col items-center">
                                     <span className="text-sm text-gray-600">In Progress</span>
-                                    <span className="text-lg font-semibold text-[var(--cyan)]">{calculatedStatusCounts.inProgress}</span> {/* Assuming --cyan is a color variable */}
+                                    <span className="text-lg font-semibold text-[var(--cyan)]">{calculatedStatusCounts.inProgress}</span>
                                 </div>
                                 <div className="flex flex-col items-center">
-                                    <span className="text-sm text-gray-600">Pending</span>
-                                    <span className="text-lg font-semibold text-yellow-500">{calculatedStatusCounts.pending}</span>
-                                </div>
-                                <div className="flex flex-col items-center">
-                                    <span className="text-sm text-gray-600">Closed</span>
-                                    <span className="text-lg font-semibold text-green-500">{calculatedStatusCounts.closed}</span>
+                                    <span className="text-sm text-gray-600">Resolved</span>
+                                    <span className="text-lg font-semibold text-green-500">{calculatedStatusCounts.resolved}</span>
                                 </div>
                             </div>
                         </div>
@@ -266,6 +246,46 @@ const DashboardStaff = () => {
                                 <Bar data={ticketsPerDayData} options={{
                                     responsive: true,
                                     maintainAspectRatio: false,
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            title: {
+                                                display: true,
+                                                text: 'Number of Tickets'
+                                            },
+                                            ticks: {
+                                                stepSize: 1
+                                            }
+                                        }
+                                    },
+                                    plugins: {
+                                        legend: {
+                                            display: false
+                                        }
+                                    }
+                                }} />
+                            </div>
+                        </div>
+
+                        {/* Staff's Tickets per Day Chart */}
+                        <div className="bg-white p-4 rounded-xl shadow-lg h-[300px]">
+                            <h3 className="text-lg font-semibold mb-4">Your Tickets per Day</h3>
+                            <div className="h-[calc(100%-40px)]">
+                                <Bar data={staffTicketsPerDayData} options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            title: {
+                                                display: true,
+                                                text: 'Number of Tickets'
+                                            },
+                                            ticks: {
+                                                stepSize: 1
+                                            }
+                                        }
+                                    },
                                     plugins: {
                                         legend: {
                                             display: false
@@ -281,21 +301,10 @@ const DashboardStaff = () => {
                             <div className="h-[calc(100%-40px)]">
                                 <Pie data={ticketStatusData} options={{
                                     responsive: true,
-                                    maintainAspectRatio: false
-                                }} />
-                            </div>
-                        </div>
-
-                        {/* Response Time Chart */}
-                        <div className="bg-white p-4 rounded-xl shadow-lg h-[300px]">
-                            <h3 className="text-lg font-semibold mb-4">Response Time</h3>
-                            <div className="h-[calc(100%-40px)]">
-                                <Line data={responseTimeData} options={{
-                                    responsive: true,
                                     maintainAspectRatio: false,
                                     plugins: {
                                         legend: {
-                                            display: false
+                                            position: 'right'
                                         }
                                     }
                                 }} />
@@ -323,7 +332,7 @@ const DashboardStaff = () => {
                                         <tr>
                                             <th className="px-3 py-2 text-left text-sm">Ticket #</th>
                                             <th className="px-3 py-2 text-left text-sm">Customer ID</th>
-                                            <th className="px-3 py-2 text-left text-sm">Username</th>
+                                            <th className="px-3 py-2 text-left text-sm">Customer Name</th>
                                             <th className="px-3 py-2 text-left text-sm">Issue</th>
                                             <th className="px-3 py-2 text-left text-sm">Status</th>
                                             <th className="px-3 py-2 text-left text-sm">Date Issued</th>
@@ -334,15 +343,21 @@ const DashboardStaff = () => {
                                         {recentStaffTickets.map(ticket => (
                                             <tr key={ticket._id} className="border-b border-gray-200 hover:bg-gray-100">
                                                 <td className="px-3 py-2 text-sm text-gray-800">{ticket._id.substring(0, 6)}...</td>
-                                                <td className="px-3 py-2 text-sm text-gray-800">{ticket.user?._id.substring(0, 6)}...</td>
-                                                <td className="px-3 py-2 text-sm text-gray-800">{ticket.user?.name || 'N/A'}</td>
+                                                <td className="px-3 py-2 text-sm text-gray-800">{ticket.customer?._id?.substring(0, 6) || 'N/A'}...</td>
+                                                <td className="px-3 py-2 text-sm text-gray-800">{ticket.customer?.name || ticket.customer?.email || 'N/A'}</td>
                                                 <td className="px-3 py-2 text-sm text-gray-800">{ticket.subject}</td>
                                                 <td className="px-3 py-2 text-sm text-gray-800 capitalize">{ticket.status}</td>
-                                                <td className="px-3 py-2 text-sm text-gray-800">{format(new Date(ticket.createdAt), 'yyyy-MM-dd')}</td>
+                                                <td className="px-3 py-2 text-sm text-gray-800">
+                                                    {new Date(ticket.createdAt).toLocaleDateString('en-GB', {
+                                                        day: '2-digit',
+                                                        month: 'long',
+                                                        year: 'numeric'
+                                                    })}
+                                                </td>
                                                 <td className="px-3 py-2 text-sm text-gray-800">
                                                     <button 
                                                         onClick={() => navigate(`/ticket-details/${ticket._id}`)}
-                                                        className="text-[var(--blush)] hover:underline"
+                                                        className="text-[var(--blush)] hover:underline cursor-pointer"
                                                     >
                                                         View
                                                     </button>

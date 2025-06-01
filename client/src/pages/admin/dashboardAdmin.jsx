@@ -47,6 +47,7 @@ const DashboardAdmin = () => {
     const [error, setError] = useState(null);
     const { user: adminUser } = useSelector((state) => state.auth);
     const [unassignedTickets, setUnassignedTickets] = useState([]);
+    const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
 
     useEffect(() => {
         const handleResize = () => {
@@ -112,34 +113,36 @@ const DashboardAdmin = () => {
     const inactiveUsers = users.filter(u => u.status === 'inactive').length;
 
     // Staff performance
-    const staffPerformance = staffMembers.map(staff => {
-        const assignedTickets = tickets.filter(ticket => ticket.assignedTo && ticket.assignedTo._id === staff._id);
-        const ticketsAssigned = assignedTickets.length;
-        const ticketsResolved = assignedTickets.filter(ticket => ticket.status === 'resolved').length;
-        // Calculate avg response time in hours for resolved/in progress tickets
-        const relevantTickets = assignedTickets.filter(ticket => ticket.status === 'resolved' || ticket.status === 'in progress');
-        let avgResponseTime = null;
-        if (relevantTickets.length > 0) {
-            const totalHours = relevantTickets.reduce((sum, ticket) => {
-                const created = new Date(ticket.createdAt);
-                const updated = new Date(ticket.updatedAt);
-                return sum + (updated - created) / 3600000;
-            }, 0);
-            avgResponseTime = (totalHours / relevantTickets.length).toFixed(2);
-        }
-        // Calculate performance percentage
-        let performance = 'N/A';
-        if (ticketsAssigned > 0) {
-            performance = ((ticketsResolved / ticketsAssigned) * 100).toFixed(1);
-        }
-        return {
-            ...staff,
-            ticketsAssigned,
-            ticketsResolved,
-            avgResponseTime: avgResponseTime !== null ? avgResponseTime : 'N/A',
-            performance,
-        };
-    });
+    const staffPerformance = staffMembers
+        .filter(staff => staff.role === 'staff') // Only include staff members
+        .map(staff => {
+            const assignedTickets = tickets.filter(ticket => ticket.assignedTo && ticket.assignedTo._id === staff._id);
+            const ticketsAssigned = assignedTickets.length;
+            const ticketsResolved = assignedTickets.filter(ticket => ticket.status === 'resolved').length;
+            // Calculate avg response time in hours for resolved/in progress tickets
+            const relevantTickets = assignedTickets.filter(ticket => ticket.status === 'resolved' || ticket.status === 'in progress');
+            let avgResponseTime = null;
+            if (relevantTickets.length > 0) {
+                const totalHours = relevantTickets.reduce((sum, ticket) => {
+                    const created = new Date(ticket.createdAt);
+                    const updated = new Date(ticket.updatedAt);
+                    return sum + (updated - created) / 3600000;
+                }, 0);
+                avgResponseTime = (totalHours / relevantTickets.length).toFixed(2);
+            }
+            // Calculate performance percentage
+            let performance = 'N/A';
+            if (ticketsAssigned > 0) {
+                performance = ((ticketsResolved / ticketsAssigned) * 100).toFixed(1);
+            }
+            return {
+                ...staff,
+                ticketsAssigned,
+                ticketsResolved,
+                avgResponseTime: avgResponseTime !== null ? avgResponseTime : 'N/A',
+                performance,
+            };
+        });
 
     // Chart Data
     const ticketAssignmentData = {
@@ -198,25 +201,86 @@ const DashboardAdmin = () => {
         }]
     };
 
-    // User registration chart: fallback to user createdAt for now
-    const userRegistrationData = users.reduce((acc, user) => {
-        const date = new Date(user.createdAt).toLocaleDateString();
-        acc[date] = (acc[date] || 0) + 1;
-        return acc;
-    }, {});
-    const registrationLabels = Object.keys(userRegistrationData).sort();
-    const registrationCounts = registrationLabels.map(date => userRegistrationData[date]);
-    const getChartData = () => ({
-        labels: registrationLabels,
-        datasets: [{
-            label: 'New Users',
-            data: registrationCounts,
-            borderColor: 'rgb(75, 192, 192)',
-            tension: 0.1,
-            fill: true,
-            backgroundColor: 'rgba(75, 192, 192, 0.2)'
-        }]
-    });
+    // User registration chart: filter by selected time period
+    const getChartData = () => {
+        const now = new Date();
+        let startDate;
+        
+        switch(selectedTimePeriod) {
+            case '24h':
+                startDate = new Date(now - 24 * 60 * 60 * 1000);
+                break;
+            case '7d':
+                startDate = new Date(now - 7 * 24 * 60 * 60 * 1000);
+                break;
+            case '14d':
+                startDate = new Date(now - 14 * 24 * 60 * 60 * 1000);
+                break;
+            case '30d':
+                startDate = new Date(now - 30 * 24 * 60 * 60 * 1000);
+                break;
+            case '90d':
+                startDate = new Date(now - 90 * 24 * 60 * 60 * 1000);
+                break;
+            default:
+                startDate = new Date(now - 24 * 60 * 60 * 1000);
+        }
+
+        // Format dates for display
+        const formatDate = (date) => {
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            });
+        };
+
+        // Get all active users
+        const activeUsers = users.filter(user => user.status === 'active');
+
+        // Create an array of dates for the selected period
+        const dates = [];
+        const currentDate = new Date(startDate);
+        while (currentDate <= now) {
+            dates.push(new Date(currentDate));
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        // Calculate cumulative active users for each date
+        const activeUsersData = dates.reduce((acc, date) => {
+            const dateStr = formatDate(date);
+            // Count users who were active on or before this date
+            const activeCount = activeUsers.filter(user => 
+                new Date(user.createdAt) <= date
+            ).length;
+            acc[dateStr] = activeCount;
+            return acc;
+        }, {});
+
+        // Sort dates chronologically
+        const registrationLabels = Object.keys(activeUsersData).sort((a, b) => {
+            const dateA = new Date(a.split(' ').reverse().join(' '));
+            const dateB = new Date(b.split(' ').reverse().join(' '));
+            return dateA - dateB;
+        });
+        const registrationCounts = registrationLabels.map(date => activeUsersData[date]);
+
+        return {
+            labels: registrationLabels,
+            datasets: [{
+                label: 'Total Active Customers',
+                data: registrationCounts,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1,
+                fill: true,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)'
+            }],
+            dateRange: {
+                start: formatDate(startDate),
+                end: formatDate(now)
+            }
+        };
+    };
 
     const handleStaffSelect = (ticketId, staffId) => {
         setTempStaffSelection(prev => ({
@@ -254,6 +318,26 @@ const DashboardAdmin = () => {
         setSelectedStaff('');
     };
 
+    const handleSort = (key) => {
+        setSortConfig(prevConfig => ({
+            key,
+            direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
+    const sortedStaffPerformance = [...staffPerformance].sort((a, b) => {
+        if (sortConfig.key === 'name') {
+            const nameA = (a.name || a.username || a.email).toLowerCase();
+            const nameB = (b.name || b.username || b.email).toLowerCase();
+            return sortConfig.direction === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+        } else if (sortConfig.key === 'performance') {
+            const perfA = a.performance === 'N/A' ? -1 : parseFloat(a.performance);
+            const perfB = b.performance === 'N/A' ? -1 : parseFloat(b.performance);
+            return sortConfig.direction === 'asc' ? perfA - perfB : perfB - perfA;
+        }
+        return 0;
+    });
+
     return (
         <div className={`flex-1 bg-gray-50 p-6 min-h-screen overflow-auto transition-all duration-300 ${sidebarWidth === '20' ? 'ml-20' : 'ml-64'}`}>
             <ToastContainer />
@@ -275,8 +359,8 @@ const DashboardAdmin = () => {
                         <h3 className="text-sm font-semibold text-gray-700 mb-3">User Statistics</h3>
                         <div className="flex gap-6">
                             <div className="flex flex-col items-center">
-                                <span className="text-sm text-gray-600">Current Admin</span>
-                                <span className="text-lg font-semibold text-[var(--hotpink)]">1</span>
+                                <span className="text-sm text-gray-600">Current Staff</span>
+                                <span className="text-lg font-semibold text-[var(--hotpink)]">{staffMembers.filter(staff => staff.role === 'staff').length}</span>
                             </div>
                             <div className="flex flex-col items-center">
                                 <span className="text-sm text-gray-600">Active Users</span>
@@ -307,7 +391,7 @@ const DashboardAdmin = () => {
                                         callbacks: {
                                             label: function(context) {
                                                 const label = context.label || '';
-                                                const value = context.raw || 0;
+                                                const value = Math.round(context.raw || 0);
                                                 const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                                 const percentage = Math.round((value / total) * 100);
                                                 return `${label}: ${value} tickets (${percentage}%)`;
@@ -332,12 +416,22 @@ const DashboardAdmin = () => {
                                         title: {
                                             display: true,
                                             text: 'Number of Tickets'
+                                        },
+                                        ticks: {
+                                            stepSize: 1
                                         }
                                     }
                                 },
                                 plugins: {
                                     legend: {
                                         position: 'top'
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: (context) => {
+                                                return `${context.dataset.label}: ${Math.round(context.raw)}`;
+                                            }
+                                        }
                                     }
                                 }
                             }} />
@@ -347,7 +441,7 @@ const DashboardAdmin = () => {
                     {/* User Registration Chart */}
                     <div className="bg-white p-4 rounded-xl shadow-lg h-[300px]">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-semibold">User Registration</h3>
+                            <h3 className="text-lg font-semibold">Total Active Customers</h3>
                             <select 
                                 className="px-3 py-1 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--hotpink)]"
                                 value={selectedTimePeriod}
@@ -360,7 +454,10 @@ const DashboardAdmin = () => {
                                 <option value="90d">Last 90 Days</option>
                             </select>
                         </div>
-                        <div className="h-[calc(100%-60px)]">
+                        <div className="text-sm text-gray-600 mb-2">
+                            {getChartData().dateRange.start} - {getChartData().dateRange.end}
+                        </div>
+                        <div className="h-[calc(100%-80px)]">
                             <Line data={getChartData()} options={{
                                 responsive: true,
                                 maintainAspectRatio: false,
@@ -369,7 +466,10 @@ const DashboardAdmin = () => {
                                         beginAtZero: true,
                                         title: {
                                             display: true,
-                                            text: 'Number of Users'
+                                            text: 'Total Active Customers'
+                                        },
+                                        ticks: {
+                                            stepSize: 1
                                         }
                                     }
                                 },
@@ -380,16 +480,10 @@ const DashboardAdmin = () => {
                                     tooltip: {
                                         callbacks: {
                                             title: (context) => {
-                                                const period = selectedTimePeriod;
-                                                if (period === '24h') {
-                                                    return `Time: ${context[0].label}`;
-                                                } else if (period === '7d') {
-                                                    return `Day: ${context[0].label}`;
-                                                } else if (period === '14d' || period === '30d') {
-                                                    return `Week: ${context[0].label}`;
-                                                } else {
-                                                    return `Month: ${context[0].label}`;
-                                                }
+                                                return `Day: ${context[0].label}`;
+                                            },
+                                            label: (context) => {
+                                                return `Total Active Customers: ${Math.round(context.raw)}`;
                                             }
                                         }
                                     }
@@ -400,9 +494,9 @@ const DashboardAdmin = () => {
                 </div>
 
                 {/* Tables Row */}
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-3 gap-6">
                     {/* Unassigned Tickets Section */}
-                    <div className="bg-white p-4 rounded-xl shadow-lg">
+                    <div className="col-span-2 bg-white p-4 rounded-xl shadow-lg">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold text-gray-800">Unassigned Tickets</h2>
                             <button 
@@ -439,9 +533,11 @@ const DashboardAdmin = () => {
                                                         onChange={(e) => handleStaffSelect(ticket._id, e.target.value)}
                                                     >
                                                         <option value="">Assign to...</option>
-                                                        {staffMembers.map(staff => (
-                                                            <option key={staff._id} value={staff._id}>{staff.name}</option>
-                                                        ))}
+                                                        {staffMembers
+                                                            .filter(staff => staff.role === 'staff')
+                                                            .map(staff => (
+                                                                <option key={staff._id} value={staff._id}>{staff.name}</option>
+                                                            ))}
                                                     </select>
                                                     <button
                                                         onClick={() => handleAssignClick(ticket)}
@@ -464,7 +560,7 @@ const DashboardAdmin = () => {
                     </div>
 
                     {/* Staff Overview Section */}
-                    <div className="bg-white p-4 rounded-xl shadow-lg">
+                    <div className="col-span-1 bg-white p-4 rounded-xl shadow-lg">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold text-gray-800">Staff Overview</h2>
                             <button 
@@ -479,32 +575,50 @@ const DashboardAdmin = () => {
                             <table className="w-full table-auto rounded-lg overflow-hidden border border-gray-300">
                                 <thead className="bg-[var(--hotpink)] text-white sticky top-0">
                                     <tr>
-                                        <th className="px-3 py-2 text-left text-sm w-1/5">Staff Name</th>
-                                        <th className="px-3 py-2 text-left text-sm w-1/5">Assigned</th>
-                                        <th className="px-3 py-2 text-left text-sm w-1/5">Resolved</th>
-                                        <th className="px-3 py-2 text-left text-sm w-1/5">Avg Response Time</th>
-                                        <th className="px-3 py-2 text-left text-sm w-1/5">Performance (%)</th>
+                                        <th 
+                                            className="px-3 py-2 text-left text-sm w-[40%] cursor-pointer hover:bg-[var(--roseberry)]"
+                                            onClick={() => handleSort('name')}
+                                        >
+                                            <div className="flex items-center gap-1">
+                                                Staff Name
+                                                {sortConfig.key === 'name' && (
+                                                    <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                                )}
+                                            </div>
+                                        </th>
+                                        <th className="px-3 py-2 text-left text-sm w-[20%]">Assigned</th>
+                                        <th className="px-3 py-2 text-left text-sm w-[20%]">Resolved</th>
+                                        <th 
+                                            className="px-3 py-2 text-left text-sm w-[20%] cursor-pointer hover:bg-[var(--roseberry)]"
+                                            onClick={() => handleSort('performance')}
+                                        >
+                                            <div className="flex items-center gap-1">
+                                                Performance
+                                                {sortConfig.key === 'performance' && (
+                                                    <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                                                )}
+                                            </div>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {staffPerformance.map(staff => (
+                                    {sortedStaffPerformance.map(staff => (
                                         <tr key={staff._id} className="border-b">
-                                            <td className="px-3 py-2 text-sm">{staff.name || staff.username || staff.email}</td>
+                                            <td className="px-3 py-2 text-sm truncate" title={staff.name || staff.username || staff.email}>
+                                                {staff.name || staff.username || staff.email}
+                                            </td>
                                             <td className="px-3 py-2 text-sm">{staff.ticketsAssigned}</td>
                                             <td className="px-3 py-2 text-sm">{staff.ticketsResolved}</td>
                                             <td className="px-3 py-2 text-sm">
-                                                <span className={`font-medium ${
-                                                    staff.avgResponseTime !== 'N/A' ?
-                                                        (parseFloat(staff.avgResponseTime) <= 2.5 ? 'text-green-500' :
-                                                        parseFloat(staff.avgResponseTime) <= 3.0 ? 'text-yellow-500' :
-                                                        'text-red-500') :
-                                                        'text-gray-400'
-                                                }`}>
-                                                    {staff.avgResponseTime}
-                                                </span>
-                                            </td>
-                                            <td className="px-3 py-2 text-sm">
-                                                {staff.performance !== 'N/A' ? `${staff.performance}%` : 'N/A'}
+                                                {staff.performance !== 'N/A' ? (
+                                                    <span className={`font-medium ${
+                                                        parseFloat(staff.performance) >= 75 ? 'text-green-500' :
+                                                        parseFloat(staff.performance) >= 50 ? 'text-yellow-500' :
+                                                        'text-red-500'
+                                                    }`}>
+                                                        {staff.performance}%
+                                                    </span>
+                                                ) : 'N/A'}
                                             </td>
                                         </tr>
                                     ))}

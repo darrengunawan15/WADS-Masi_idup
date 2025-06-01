@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getTicket, addComment, updateTicket, assignTicket, uploadFile, reset } from '../../redux/slices/ticketSlice';
+import { logout } from '../../redux/slices/authSlice';
+import { toast } from 'react-toastify';
 import Spinner from '../../components/Spinner';
 
 const TicketDetails = () => {
@@ -10,21 +12,49 @@ const TicketDetails = () => {
     const dispatch = useDispatch();
 
     const { ticket, isLoading, isError, message } = useSelector((state) => state.tickets);
-    const { user } = useSelector((state) => state.auth);
+    const { user, accessToken } = useSelector((state) => state.auth);
 
     const [newCommentContent, setNewCommentContent] = useState('');
     const [ticketStatusLocal, setTicketStatusLocal] = useState('');
     const [assignedToUserLocal, setAssignedToUserLocal] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [pendingStatus, setPendingStatus] = useState('');
 
     useEffect(() => {
+        // Check if token exists
+        if (!accessToken) {
+            dispatch(logout());
+            toast.error('Session expired. Please login again.');
+            navigate('/');
+            return;
+        }
+
+        // Check if token is expired
+        try {
+            const tokenData = JSON.parse(atob(accessToken.split('.')[1]));
+            const expirationTime = tokenData.exp * 1000; // Convert to milliseconds
+            
+            if (Date.now() >= expirationTime) {
+                dispatch(logout());
+                toast.error('Session expired. Please login again.');
+                navigate('/');
+                return;
+            }
+        } catch (error) {
+            dispatch(logout());
+            toast.error('Invalid session. Please login again.');
+            navigate('/');
+            return;
+        }
+
         if (ticketId) {
             dispatch(getTicket(ticketId));
         }
         return () => {
             dispatch(reset());
         };
-    }, [ticketId, dispatch]);
+    }, [ticketId, dispatch, accessToken, navigate]);
 
     useEffect(() => {
         if (ticket && ticket._id) {
@@ -35,8 +65,40 @@ const TicketDetails = () => {
 
     const handleStatusChange = (e) => {
         const newStatus = e.target.value;
-        setTicketStatusLocal(newStatus);
-        dispatch(updateTicket({ ticketId, updateData: { status: newStatus } }));
+        if (newStatus === 'resolved' && ticketStatusLocal === 'in progress') {
+            setPendingStatus(newStatus);
+            setShowConfirmModal(true);
+        } else {
+            setTicketStatusLocal(newStatus);
+            dispatch(updateTicket({ 
+                ticketId: ticketId, 
+                updateData: { 
+                    status: newStatus,
+                    resolvedAt: newStatus === 'resolved' ? new Date().toISOString() : null
+                } 
+            }));
+        }
+    };
+
+    const handleConfirmStatus = () => {
+        if (pendingStatus === 'resolved') {
+            setTicketStatusLocal('resolved');
+            dispatch(updateTicket({ 
+                ticketId: ticketId, 
+                updateData: { 
+                    status: 'resolved',
+                    resolvedAt: new Date().toISOString()
+                } 
+            }));
+        }
+        setShowConfirmModal(false);
+        setPendingStatus('');
+    };
+
+    const handleCancelStatus = () => {
+        setShowConfirmModal(false);
+        setPendingStatus('');
+        setTicketStatusLocal(ticket.status);
     };
 
     const handleAssignedToChange = (e) => {
@@ -92,12 +154,10 @@ const TicketDetails = () => {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'open':
-                return 'bg-red-100 text-red-800';
             case 'in progress':
                 return 'bg-yellow-100 text-yellow-800';
-            case 'closed':
-                return 'bg-gray-100 text-gray-800';
+            case 'resolved':
+                return 'bg-green-100 text-green-800';
             default:
                 return 'bg-gray-100 text-gray-800';
         }
@@ -267,9 +327,8 @@ const TicketDetails = () => {
                                             backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E\")"
                                         }}
                                     >
-                                        <option value='open'>Open</option>
                                         <option value='in progress'>In Progress</option>
-                                        <option value='closed'>Closed</option>
+                                        <option value='resolved'>Resolved</option>
                                     </select>
                                 </div>
 
@@ -306,6 +365,30 @@ const TicketDetails = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Confirmation Modal */}
+            {showConfirmModal && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm Status Change</h3>
+                        <p className="text-gray-600 mb-6">Are you sure you want to mark this ticket as resolved?</p>
+                        <div className="flex justify-end space-x-4">
+                            <button
+                                onClick={handleCancelStatus}
+                                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirmStatus}
+                                className="px-4 py-2 bg-[var(--hotpink)] text-white rounded hover:bg-[var(--roseberry)] transition-colors"
+                            >
+                                Confirm
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

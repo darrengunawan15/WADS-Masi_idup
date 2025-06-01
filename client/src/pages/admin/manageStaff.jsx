@@ -59,13 +59,15 @@ const ManageStaff = () => {
     }, []);
 
     // Filter staff based on search query
-    const filteredStaff = staffMembers.filter(staff => {
-        return searchQuery === '' || 
-            staff._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (staff.username || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            staff.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (staff.name || '').toLowerCase().includes(searchQuery.toLowerCase());
-    });
+    const filteredStaff = staffMembers
+        .filter(staff => staff.role === 'staff') // Only include staff members
+        .filter(staff => {
+            return searchQuery === '' || 
+                staff._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (staff.username || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                staff.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (staff.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+        });
 
     // Calculate ticket stats for each staff
     const staffWithStats = filteredStaff.map(staff => {
@@ -133,7 +135,14 @@ const ManageStaff = () => {
                                             <td className="px-3 py-2 text-sm truncate">{staff.username || staff.name}</td>
                                             <td className="px-3 py-2 text-sm truncate">{staff.email}</td>
                                             <td className="px-3 py-2 text-sm">
-                                                {staff.performance}
+                                                <span className={`font-medium ${
+                                                    staff.performance === 'N/A' ? 'text-gray-400' :
+                                                    parseFloat(staff.performance.split('(')[1]) < 50 ? 'text-red-500' :
+                                                    parseFloat(staff.performance.split('(')[1]) < 75 ? 'text-yellow-500' :
+                                                    'text-green-500'
+                                                }`}>
+                                                    {staff.performance}
+                                                </span>
                                             </td>
                                             <td className="px-3 py-2 text-sm">
                                                 <div className="flex flex-col">

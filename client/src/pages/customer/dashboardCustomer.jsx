@@ -72,15 +72,15 @@ const DashboardCustomer = () => {
         <div className="flex-1 bg-gray-50 p-6 min-h-screen overflow-auto ml-20">
             <DashboardHeader staffName={user?.name || 'Customer'} role={user?.role} />
 
-            <div className="flex flex-col space-y-6 pt-8">
+            <div className="flex flex-col space-y-6 pt-8 h-[calc(100vh-10rem)]">
                 {/* Bento Grid Layout */}
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-6 h-full">
                     {/* Open Tickets Bento */}
-                    <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow h-full">
+                    <div className="bg-white rounded-xl shadow-sm p-6 h-full flex flex-col">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold text-gray-800">Open Tickets</h3>
                         </div>
-                        <div className="overflow-auto h-[calc(100%-3rem)]">
+                        <div className="overflow-auto flex-1">
                             <table className="min-w-full table-auto rounded-lg overflow-hidden border border-gray-300">
                                 <thead className="bg-[var(--hotpink)] text-white sticky top-0">
                                     <tr>
@@ -125,11 +125,11 @@ const DashboardCustomer = () => {
                     </div>
 
                     {/* Ticket History Bento */}
-                    <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow h-full">
+                    <div className="bg-white rounded-xl shadow-sm p-6 h-full flex flex-col">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold text-gray-800">Ticket History</h3>
                         </div>
-                        <div className="overflow-auto h-[calc(100%-3rem)]">
+                        <div className="overflow-auto flex-1">
                             <table className="min-w-full table-auto rounded-lg overflow-hidden border border-gray-300">
                                 <thead className="bg-[var(--hotpink)] text-white sticky top-0">
                                     <tr>
@@ -177,7 +177,7 @@ const DashboardCustomer = () => {
                 {/* Second Row - Three Bento Layout */}
                 <div className="grid grid-cols-3 gap-6">
                     {/* Customer Support Bento */}
-                    <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow flex flex-col h-full">
+                    <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col h-full">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold text-gray-800">Customer Support</h3>
                             <span className="px-3 py-1 bg-[var(--hotpink)] text-white rounded-full text-sm">
@@ -198,7 +198,7 @@ const DashboardCustomer = () => {
                     </div>
 
                     {/* AI Assistant Bento */}
-                    <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow flex flex-col h-full">
+                    <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col h-full">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold text-gray-800">AI Assistant</h3>
                             <span className="px-3 py-1 bg-[var(--hotpink)] text-white rounded-full text-sm">
@@ -219,7 +219,7 @@ const DashboardCustomer = () => {
                     </div>
 
                     {/* Blank Bento */}
-                    <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow flex flex-col h-full">
+                    <div className="bg-white rounded-xl shadow-sm p-6 flex flex-col h-full">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold text-gray-800">Quick Actions</h3>
                             <span className="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm">
