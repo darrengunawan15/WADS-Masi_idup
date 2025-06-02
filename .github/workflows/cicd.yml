@@ -48,8 +48,8 @@ jobs:
       - name: Pull Latest Backend Image
         run: docker pull ${{ secrets.DOCKER_USERNAME }}/finalprojectwads-backend:latest
 
-      - name: Pull Latest Frontend Image
-        run: docker pull ${{ secrets.DOCKER_USERNAME }}/finalprojectwads-frontend:latest
+      # - name: Pull Latest Frontend Image
+        # run: docker pull ${{ secrets.DOCKER_USERNAME }}/finalprojectwads-frontend:latest
 
       - name: Stop and Remove Old Containers
         run: |
