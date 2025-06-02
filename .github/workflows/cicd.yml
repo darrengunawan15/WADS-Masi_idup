@@ -1,4 +1,4 @@
-name: Todolist CI/CD
+name: masi idup CI/CD
 
 on:
   push:
