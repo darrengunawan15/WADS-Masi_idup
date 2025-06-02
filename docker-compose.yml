@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   backend:
-    image: darrengun15/finalprojectwads-backend:latest
+    image: waengs/finalprojectwads-backend:latest
     restart: always
     environment:
       MONGO_URI: ${MONGO_URI}
@@ -16,7 +16,7 @@ services:
       - "3002:3002"
 
   frontend:
-    image: darrengun15/finalprojectwads-frontend:latest
+    image: waengs/finalprojectwads-frontend:latest
     restart: always
     depends_on:
       - backend
