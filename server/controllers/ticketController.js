@@ -87,14 +87,20 @@ const getTickets = async (req, res) => {
   }
 
   try {
-    // Filter tickets by assignedTo for staff, allow admin to see all
-    const filter = req.user.role === 'staff' ? { assignedTo: req.user._id } : {};
+    // Build filter
+    let filter = {};
+    if (req.user.role === 'staff') {
+      filter.assignedTo = req.user._id;
+    }
+    if (req.query.status) {
+      filter.status = req.query.status;
+    }
 
     const tickets = await Ticket.find(filter)
-      .populate('customer', 'name email') // Populate customer details
-      .populate('assignedTo', 'name email') // Populate assigned staff/admin details
-      .populate('category', 'categoryName') // Populate category details
-      .populate({ // Populate comments and their authors
+      .populate('customer', 'name email')
+      .populate('assignedTo', 'name email')
+      .populate('category', 'categoryName')
+      .populate({
         path: 'comments',
         populate: {
           path: 'author',

@@ -290,32 +290,36 @@ const DashboardAdmin = () => {
     };
 
     const handleAssignClick = (ticket) => {
-        const staffId = tempStaffSelection[ticket.id];
+        const staffId = tempStaffSelection[ticket._id];
         if (!staffId) return;
-        
         setSelectedTicket(ticket);
         setSelectedStaff(staffId);
         setShowConfirmModal(true);
     };
 
-    const handleConfirmAssignment = () => {
-        // Here you would typically make an API call to update the ticket
-        console.log(`Assigning ticket ${selectedTicket.id} to staff ${selectedStaff}`);
-        
-        // Show success toast
-        toast.success(`Ticket #${selectedTicket.id} assigned successfully!`, {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-        });
-
-        // Close modal and reset states
-        setShowConfirmModal(false);
-        setSelectedTicket(null);
-        setSelectedStaff('');
+    const handleConfirmAssignment = async () => {
+        if (!selectedTicket || !selectedStaff) return;
+        try {
+            const token = localStorage.getItem('accessToken');
+            await adminService.assignTicket(selectedTicket._id, selectedStaff, token);
+            toast.success(`Ticket #${selectedTicket._id} assigned successfully!`, {
+                position: "top-right",
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+            });
+            // Remove the ticket from unassignedTickets and update tickets
+            setUnassignedTickets(prev => prev.filter(t => t._id !== selectedTicket._id));
+            setTickets(prev => prev.map(t => t._id === selectedTicket._id ? { ...t, assignedTo: { _id: selectedStaff } } : t));
+        } catch (err) {
+            toast.error('Failed to assign ticket. Please try again.');
+        } finally {
+            setShowConfirmModal(false);
+            setSelectedTicket(null);
+            setSelectedStaff('');
+        }
     };
 
     const handleSort = (key) => {
@@ -635,7 +639,7 @@ const DashboardAdmin = () => {
                         <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl relative z-10">
                             <h3 className="text-lg font-semibold mb-4">Confirm Assignment</h3>
                             <p className="text-gray-600 mb-6">
-                                Are you sure you want to assign Ticket #{selectedTicket?.id} to {staffMembers.find(s => s.id === parseInt(selectedStaff))?.name}?
+                                Are you sure you want to assign Ticket #{selectedTicket?._id} to {staffMembers.find(s => s._id === selectedStaff)?.name}?
                             </p>
                             <div className="flex justify-end gap-4">
                                 <button

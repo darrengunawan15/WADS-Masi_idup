@@ -49,10 +49,17 @@ const AssignTickets = () => {
             setError(null);
             try {
                 const token = localStorage.getItem('accessToken');
-                const [ticketsRes, staffRes] = await Promise.all([
-                    adminService.getUnassignedTickets(token),
-                    adminService.getStaff(token),
-                ]);
+                let ticketsRes;
+                if (selectedStatus === 'all') {
+                    ticketsRes = await adminService.getAllTickets(token);
+                } else if (selectedStatus === 'unassigned') {
+                    ticketsRes = await adminService.getUnassignedTickets(token);
+                } else {
+                    // Fetch all and filter client-side for other statuses
+                    const allTickets = await adminService.getAllTickets(token);
+                    ticketsRes = allTickets.filter(ticket => ticket.status === selectedStatus);
+                }
+                const staffRes = await adminService.getStaff(token);
                 setTickets(ticketsRes);
                 setStaffMembers(staffRes);
                 // Pre-select staff for tickets that already have assignedTo
@@ -71,7 +78,7 @@ const AssignTickets = () => {
             }
         };
         fetchData();
-    }, []);
+    }, [selectedStatus]);
 
     const handleStaffSelect = (ticketId, staffId) => {
         setTempStaffSelection(prev => ({
@@ -115,9 +122,17 @@ const AssignTickets = () => {
                     fontSize: '16px'
                 }
             });
-            // Refetch tickets after assignment
+            // Refetch tickets after assignment, respecting current filter
             const token2 = localStorage.getItem('accessToken');
-            const ticketsRes = await adminService.getUnassignedTickets(token2);
+            let ticketsRes;
+            if (selectedStatus === 'all') {
+                ticketsRes = await adminService.getAllTickets(token2);
+            } else if (selectedStatus === 'unassigned') {
+                ticketsRes = await adminService.getUnassignedTickets(token2);
+            } else {
+                const allTickets = await adminService.getAllTickets(token2);
+                ticketsRes = allTickets.filter(ticket => ticket.status === selectedStatus);
+            }
             setTickets(ticketsRes);
         } catch (err) {
             toast.error('Failed to assign ticket');
