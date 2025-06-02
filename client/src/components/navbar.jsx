@@ -1,52 +1,174 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import logo from '../assets/react.svg';
+import logo from '../assets/logo.png';
 
 const Navbar = () => {
-    const navigate = useNavigate(); 
+    const navigate = useNavigate();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    const handleLoginClick = () => {
-        navigate('/login'); 
-    };
-
-    const handleLogoClick = () => {
+    const handleHomeClick = () => {
         navigate('/');
     };
 
+    const handleLoginClick = () => {
+        navigate('/login');
+    };
+
+    const handleRegisterClick = () => {
+        navigate('/create-account');
+    };
+
+    const scrollToSection = (sectionId) => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+            const navbarHeight = 96; // Height of the navbar (h-24 = 96px)
+            const offset = sectionId === 'discover' ? + 100 : navbarHeight; // Negative offset for discover to scroll down more
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+        }
+    };
+
     return (
-        <div className="h-24 bg-white">
-            <div className="flex items-center justify-between max-w-7xl mx-auto w-full h-full px-4 lg:px-8">
-                <div className="flex items-center w-1/6 min-w-[80px]">
-                    <img
-                        src={logo}
-                        alt="Logo"
-                        className="h-10 cursor-pointer"
-                        onClick={handleLogoClick}
-                    />
-                </div>
-
-                <div className="flex flex-col flex-grow items-center">
-                    <div className="flex items-center justify-center h-1/2">
-                        <h2 className="text-[var(--blush)] text-3xl md:text-4xl font-bold">Kitchen Serve+</h2>
-                    </div>
-                    <div className="flex space-x-8 text-[var(--roseberry)] text-lg font-semibold h-1/2 items-center">
-                        <a href="#" className="hover:underline">About Us</a>
-                        <a href="#" className="hover:underline">FAQs</a>
-                        <a href="#" className="hover:underline">Our Products</a>
-                        <a href="#" className="hover:underline">Discover Us</a>
-                    </div>
-                </div>
-
-                <div className="w-1/6 flex justify-end">
-                    <button
-                        onClick={handleLoginClick}
-                        className="py-2 px-6 bg-white text-[var(--hotpink)] border-2 border-[var(--hotpink)] rounded-[20px] hover:bg-[var(--hotpink)] hover:text-white transition-all"
+        <nav className="bg-white shadow-md fixed w-full top-0 z-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-24">
+                    {/* Logo */}
+                    <div 
+                        className="flex items-center cursor-pointer"
+                        onClick={handleHomeClick}
                     >
-                        Login
-                    </button>
+                        <img 
+                            src={logo}
+                            alt="Kitchen Serve Logo" 
+                            className="h-16 w-auto"
+                        />
+                    </div>
+
+                    {/* Desktop Menu */}
+                    <div className="hidden md:flex items-center space-x-8">
+                        <button 
+                            onClick={() => scrollToSection('about')}
+                            className="text-[var(--roseberry)] hover:text-[var(--hotpink)] text-lg font-medium transition-colors cursor-pointer"
+                        >
+                            About Us
+                        </button>
+                        <button 
+                            onClick={() => scrollToSection('products')}
+                            className="text-[var(--roseberry)] hover:text-[var(--hotpink)] text-lg font-medium transition-colors cursor-pointer"
+                        >
+                            Our Products
+                        </button>
+                        <button 
+                            onClick={() => scrollToSection('faqs')}
+                            className="text-[var(--roseberry)] hover:text-[var(--hotpink)] text-lg font-medium transition-colors cursor-pointer"
+                        >
+                            FAQs
+                        </button>
+                        <button 
+                            onClick={() => scrollToSection('discover')}
+                            className="text-[var(--roseberry)] hover:text-[var(--hotpink)] text-lg font-medium transition-colors cursor-pointer"
+                        >
+                            Discover Us
+                        </button>
+                    </div>
+
+                    {/* Auth Buttons */}
+                    <div className="hidden md:flex items-center space-x-4">
+                        <button
+                            onClick={handleLoginClick}
+                            className="w-32 px-6 py-2.5 text-[var(--hotpink)] border-2 border-[var(--hotpink)] rounded-full hover:bg-[var(--hotpink)] hover:text-white transition-all text-lg cursor-pointer"
+                        >
+                            Login
+                        </button>
+                        <button
+                            onClick={handleRegisterClick}
+                            className="w-32 px-6 py-2.5 bg-[var(--hotpink)] text-white rounded-full hover:bg-[var(--roseberry)] transition-all text-lg cursor-pointer"
+                        >
+                            Register
+                        </button>
+                    </div>
+
+                    {/* Mobile Menu Button */}
+                    <div className="md:hidden">
+                        <button
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            className="text-[var(--roseberry)] hover:text-[var(--hotpink)] cursor-pointer"
+                        >
+                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                {isMenuOpen ? (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                ) : (
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                )}
+                            </svg>
+                        </button>
+                    </div>
                 </div>
+
+                {/* Mobile Menu */}
+                {isMenuOpen && (
+                    <div className="md:hidden">
+                        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                            <button 
+                                onClick={() => {
+                                    scrollToSection('about');
+                                    setIsMenuOpen(false);
+                                }}
+                                className="w-full text-left px-3 py-2 text-[var(--roseberry)] hover:text-[var(--hotpink)] font-medium cursor-pointer"
+                            >
+                                About Us
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    scrollToSection('products');
+                                    setIsMenuOpen(false);
+                                }}
+                                className="w-full text-left px-3 py-2 text-[var(--roseberry)] hover:text-[var(--hotpink)] font-medium cursor-pointer"
+                            >
+                                Our Products
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    scrollToSection('faqs');
+                                    setIsMenuOpen(false);
+                                }}
+                                className="w-full text-left px-3 py-2 text-[var(--roseberry)] hover:text-[var(--hotpink)] font-medium cursor-pointer"
+                            >
+                                FAQs
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    scrollToSection('discover');
+                                    setIsMenuOpen(false);
+                                }}
+                                className="w-full text-left px-3 py-2 text-[var(--roseberry)] hover:text-[var(--hotpink)] font-medium cursor-pointer"
+                            >
+                                Discover Us
+                            </button>
+                            <div className="pt-4 pb-3 border-t border-gray-200">
+                                <button
+                                    onClick={handleLoginClick}
+                                    className="w-full text-left px-3 py-2 text-[var(--hotpink)] hover:text-[var(--roseberry)] font-medium cursor-pointer"
+                                >
+                                    Login
+                                </button>
+                                <button
+                                    onClick={handleRegisterClick}
+                                    className="w-full text-left px-3 py-2 text-[var(--hotpink)] hover:text-[var(--roseberry)] font-medium cursor-pointer"
+                                >
+                                    Register
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
-        </div>
+        </nav>
     );
 };
 

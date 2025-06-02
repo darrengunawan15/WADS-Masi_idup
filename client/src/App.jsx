@@ -1,7 +1,9 @@
 import './App.css';
+import 'react-toastify/dist/ReactToastify.css';
 import Navbar from './components/navbar';
 import Footer from './components/footer';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';  
+import { ToastContainer } from 'react-toastify';
 import Home from './pages/home';
 import CreateAccount from './pages/authentication/register';
 import Login from './pages/authentication/login';
@@ -25,6 +27,19 @@ import Profile from './pages/profile';
 function App() {
   return (
     <Router>
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        limit={1}
+      />
       <Routes>
         <Route element={<PrivateRoute allowedRoles={['staff']} />}>
           <Route
@@ -168,7 +183,6 @@ function App() {
               <main className="flex-grow">
                 <CreateAccount />
               </main>
-              <Footer />
             </>
           }
         />
@@ -180,7 +194,6 @@ function App() {
               <main className="flex-grow">
                 <Login />
               </main>
-              <Footer />
             </>
           }
         />

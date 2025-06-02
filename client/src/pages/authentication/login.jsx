@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import imgplaceholder from '../../assets/img-placeholder.webp'; 
 import { useDispatch, useSelector } from 'react-redux';
 import { login, reset } from '../../redux/slices/authSlice';
+import { toast } from 'react-toastify';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -17,8 +18,9 @@ const Login = () => {
 
     useEffect(() => {
         if (isError) {
-            // You might want to display an error message here
-            console.log(message); // Or use a toast notification library
+            toast.dismiss(); // Dismiss any existing toast
+            toast.error('Email or password is incorrect. Please try again.');
+            dispatch(reset());
         }
 
         if (isSuccess && user) {
@@ -33,7 +35,7 @@ const Login = () => {
         }
 
         dispatch(reset());
-    }, [user, isError, isSuccess, message, navigate, dispatch, reset]);
+    }, [user, isError, isSuccess, message, navigate, dispatch]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -50,7 +52,7 @@ const Login = () => {
     };
 
     return (
-        <div className="flex flex-col min-h-full max-h-screen justify-center items-center bg-gray-50 py-8">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
             <div className="max-w-4xl w-full flex bg-white rounded-lg shadow-lg">
                 <div
                     className="w-1/2 bg-cover bg-center rounded-l-lg"
@@ -74,6 +76,7 @@ const Login = () => {
                                     className="mt-2 p-3 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--blush)]"
                                     placeholder="Enter your email"
                                     required
+                                    disabled={isLoading}
                                 />
                             </div>
 
@@ -89,19 +92,26 @@ const Login = () => {
                                     className="mt-2 p-3 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--blush)]"
                                     placeholder="Enter your password"
                                     required
+                                    disabled={isLoading}
                                 />
                             </div>
 
                             <button
                                 type="submit"
-                                className="w-full py-3 bg-[var(--blush)] text-white rounded-md text-lg font-semibold hover:bg-[var(--roseberry)] transition-colors"
+                                className={`w-full py-3 bg-[var(--blush)] text-white rounded-md text-lg font-semibold transition-colors ${
+                                    isLoading 
+                                    ? 'opacity-50 cursor-not-allowed' 
+                                    : 'hover:bg-[var(--roseberry)]'
+                                }`}
+                                disabled={isLoading}
                             >
-                                Log In
+                                {isLoading ? 'Logging in...' : 'Log In'}
                             </button>
 
                             <button
                                 type="button"
                                 className="w-full py-3 bg-red-500 text-white rounded-md text-lg font-semibold mt-4 hover:bg-red-600 transition-colors"
+                                disabled={isLoading}
                             >
                                 Sign in with Google
                             </button>
@@ -109,7 +119,11 @@ const Login = () => {
 
                         <div className="text-center text-sm text-gray-600 mt-4">
                             <span>Don't have an account? </span>
-                            <button onClick={redirectToCreateAccount} className="text-[var(--blush)] hover:underline">
+                            <button 
+                                onClick={redirectToCreateAccount} 
+                                className="text-[var(--blush)] hover:underline"
+                                disabled={isLoading}
+                            >
                                 Create an account
                             </button>
                         </div>

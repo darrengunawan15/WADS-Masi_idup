@@ -38,7 +38,7 @@ class Home extends Component {
             ];
 
             return (
-                <div className="relative bg-[#683949] py-12 w-full">
+                <div className="relative bg-[#683949] py-24 w-full" id='products'>
                     <div className="px-4">
                         <h2 className="text-white text-5xl font-bold drop-shadow-lg text-center mb-8">Our Products</h2>
                         <p className="text-lg text-center mb-8 text-white">
@@ -97,7 +97,7 @@ class Home extends Component {
             ];
 
             return (
-                <div className="bg-[#FFC4CE] py-12 px-4">
+                <div className="bg-[#FFC4CE] py-12 px-4" id='faqs'>
                     <h2 className="text-white text-8xl font-bold drop-shadow-lg text-center mb-8">FaQs</h2>
                     <div className="max-w-7xl mx-auto px-4 space-y-4">
                         {faqs.map((faq, index) => (
@@ -124,7 +124,7 @@ class Home extends Component {
         };
 
             const DiscoverUs = () => (
-        <div className="bg-[#FFC4CE] py-12 px-4">
+        <div className="bg-[#FFC4CE] py-12 px-4" id='discover'>
             <div className="flex justify-center mb-12">
                 <h2 className="text-white text-8xl font-bold drop-shadow-lg text-center">Kitchen Serve+</h2>
             </div>
@@ -160,6 +160,7 @@ We believe in building relationships, not just transactions. Whether you’re a 
         return (
             <main className="flex-grow">
             <div className="max-w-7xl mx-auto px-4 py-8">
+                <div className='py-16'></div>
                 {/* Hero Section */}
                 <section className="flex flex-col md:flex-row items-center justify-center py-16 px-8 bg-[#FFC4CE] rounded-3xl">
                 <div className="md:w-1/2 mb-8 md:mb-0 md:px-8">
@@ -186,7 +187,7 @@ We believe in building relationships, not just transactions. Whether you’re a 
 
 
                 {/* About Us */}
-                <section className="flex flex-col md:flex-row items-center py-16 px-4 bg-gray-100 mt-12 rounded-3xl">
+                <section className="flex flex-col md:flex-row items-center py-16 px-4 bg-gray-100 mt-12 rounded-3xl" id='about'>
                 <div className="md:w-1/2 mb-8 md:mb-0">
                     <img
                         src={risolImage}
@@ -195,7 +196,7 @@ We believe in building relationships, not just transactions. Whether you’re a 
                     />
                 </div>
 
-                <div className="md:w-1/2 md:pl-12 text-lg text-gray-700 text-justify text-left">
+                <div className="md:w-1/2 md:pl-12 text-lg text-gray-700 text-justify">
                     <h2 className="text-[#683949] text-4xl md:text-5xl font-bold mb-6 text-center mx-auto w-full">
                         About Us
                     </h2>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import imgplaceholder from '../../assets/img-placeholder.webp';
 import { useDispatch, useSelector } from 'react-redux';
 import { register, reset } from '../../redux/slices/authSlice';
+import { toast } from 'react-toastify';
 
 const CreateAccount = () => {
     const [name, setName] = useState('');
@@ -11,18 +12,33 @@ const CreateAccount = () => {
 
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { isSuccess } = useSelector((state) => state.auth);
+    const { isSuccess, isError, message } = useSelector((state) => state.auth);
 
     useEffect(() => {
+        if (isError) {
+            if (message?.includes('already exists')) {
+                toast.error('This email address is already registered. Please use a different email or try logging in.');
+            } else {
+                toast.error(message || 'Registration failed. Please try again.');
+            }
+            dispatch(reset());
+        }
+
         if (isSuccess) {
+            toast.success('Account created successfully! Please log in.');
             navigate('/login');
             dispatch(reset());
         }
-    }, [isSuccess, navigate, dispatch]);
+    }, [isError, isSuccess, message, navigate, dispatch]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        dispatch(register({ name, email, password, role: 'customer' }));
+        try {
+            await dispatch(register({ name, email, password, role: 'customer' })).unwrap();
+        } catch (error) {
+            // Error is already handled in the useEffect
+            console.error('Registration error:', error);
+        }
     };
 
     const redirectToLogin = () => {
@@ -30,7 +46,7 @@ const CreateAccount = () => {
     };
 
     return (
-        <div className="flex flex-col min-h-full max-h-screen justify-center items-center bg-gray-50 py-8">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
             <div className="max-w-4xl w-full flex bg-white rounded-lg shadow-lg">
                 <div
                     className="w-1/2 bg-cover bg-center rounded-l-lg"
