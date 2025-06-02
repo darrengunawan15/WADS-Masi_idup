@@ -504,7 +504,7 @@ const DashboardAdmin = () => {
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold text-gray-800">Unassigned Tickets</h2>
                             <button 
-                                onClick={() => navigate('/manage-tickets')}
+                                onClick={() => navigate('/assign-tickets')}
                                 className="text-[var(--hotpink)] hover:text-[var(--roseberry)] transition-colors cursor-pointer"
                             >
                                 View All

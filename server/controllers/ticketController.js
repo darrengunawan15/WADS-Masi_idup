@@ -63,14 +63,45 @@ const createTicket = async (req, res) => {
   }
 
   try {
+    // 1. Create the ticket first (without file attachments)
     const ticket = await Ticket.create({
       subject,
       description,
       customer: customerId,
       category: category || null, // Category is optional
+      fileAttachments: [],
     });
 
-    res.status(201).json(ticket);
+    // 2. Handle file uploads (if any)
+    let fileAttachmentIds = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        // Upload file to Cloudinary
+        const result = await cloudinary.uploader.upload(
+          `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+          {
+            folder: 'wads-masi_idup',
+            resource_type: 'auto',
+          }
+        );
+        // Create FileAttachment document with ticket ID
+        const fileAttachment = await FileAttachment.create({
+          ticket: ticket._id,
+          link: result.secure_url,
+          fileName: file.originalname,
+        });
+        fileAttachmentIds.push(fileAttachment._id);
+      }
+      // 3. Update the ticket's fileAttachments array
+      ticket.fileAttachments = fileAttachmentIds;
+      await ticket.save();
+    }
+
+    // 4. Populate fileAttachments for response
+    const populatedTicket = await Ticket.findById(ticket._id)
+      .populate('fileAttachments', 'fileName link');
+
+    res.status(201).json(populatedTicket);
   } catch (error) {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }

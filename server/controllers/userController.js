@@ -4,6 +4,7 @@ const generateToken = require('../utils/generateToken');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
+const cloudinary = require('cloudinary').v2;
 
 // @desc    Register new user
 // @route   POST /api/users
@@ -53,6 +54,7 @@ const registerUser = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      profilePicture: user.profilePicture,
       accessToken, // Send access token
       refreshToken, // Send refresh token
     });
@@ -104,6 +106,7 @@ const loginUser = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      profilePicture: user.profilePicture,
       accessToken, // Send new access token
       refreshToken, // Send new refresh token
     });
@@ -292,8 +295,15 @@ const updateProfile = asyncHandler(async (req, res) => {
 
   // Handle profile picture update if provided
   if (req.file) {
-    // Store only the filename, not the full path
-    user.profilePicture = req.file.filename;
+    // Upload to Cloudinary and store the secure_url
+    const result = await cloudinary.uploader.upload(
+      `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+      {
+        folder: 'wads-masi_idup/profile_pictures',
+        resource_type: 'image',
+      }
+    );
+    user.profilePicture = result.secure_url;
   }
 
   await user.save();

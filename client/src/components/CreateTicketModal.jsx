@@ -50,6 +50,7 @@ const CreateTicketModal = ({ isOpen, onClose, onTicketCreated }) => {
             await dispatch(createTicket(formData)).unwrap();
             if (onTicketCreated) onTicketCreated();
             onClose();
+            setFormData({ subject: '', description: '', files: [], category: '' });
         } catch (error) {
             console.error('Failed to create ticket:', error);
         } finally {

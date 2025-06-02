@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../redux/slices/authSlice';
 
 const DashboardHeader = ({ staffName, role }) => {
@@ -9,6 +9,7 @@ const DashboardHeader = ({ staffName, role }) => {
     const menuRef = useRef(null);
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const { user } = useSelector((state) => state.auth);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -56,19 +57,28 @@ const DashboardHeader = ({ staffName, role }) => {
             <div className="flex justify-between items-start mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-                    <p className="text-gray-600 mt-1">Welcome back, {staffName}!</p>
+                    <p className="text-gray-600 mt-1">Welcome back, {user?.name || staffName}!</p>
                 </div>
                 <div className="flex items-center gap-4 relative" ref={menuRef}>
                     <div className="text-right">
-                        <p className="text-sm font-medium text-gray-800">{staffName}</p>
-                        <p className="text-xs text-gray-500">{getRoleLabel(role)}</p>
+                        <p className="text-sm font-medium text-gray-800">{user?.name || staffName}</p>
+                        <p className="text-xs text-gray-500">{getRoleLabel(user?.role || role)}</p>
                     </div>
-                    <div 
-                        className="w-12 h-12 rounded-full bg-[var(--hotpink)] flex items-center justify-center text-white font-semibold text-lg cursor-pointer hover:bg-[var(--roseberry)] transition-colors"
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    >
-                        {staffName.split(' ').map(n => n[0]).join('')}
-                    </div>
+                    {user?.profilePicture ? (
+                        <img
+                            src={user.profilePicture}
+                            alt="Profile"
+                            className="w-12 h-12 rounded-full object-cover border-2 border-[var(--hotpink)] cursor-pointer hover:border-[var(--roseberry)] transition-colors"
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        />
+                    ) : (
+                        <div 
+                            className="w-12 h-12 rounded-full bg-[var(--hotpink)] flex items-center justify-center text-white font-semibold text-lg cursor-pointer hover:bg-[var(--roseberry)] transition-colors"
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        >
+                            {(user?.name || staffName).split(' ').map(n => n[0]).join('')}
+                        </div>
+                    )}
 
                     {/* Popup Menu */}
                     {isMenuOpen && (

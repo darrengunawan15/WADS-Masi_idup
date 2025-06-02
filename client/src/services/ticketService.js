@@ -13,8 +13,31 @@ const authHeader = (token) => {
 
 // Create new ticket
 const createTicket = async (ticketData, token) => {
-  const response = await axios.post(API_URL, ticketData, authHeader(token));
-  return response.data;
+  // If files are present, use FormData
+  if (ticketData.files && ticketData.files.length > 0) {
+    const formData = new FormData();
+    formData.append('subject', ticketData.subject);
+    formData.append('description', ticketData.description);
+    if (ticketData.category) formData.append('category', ticketData.category);
+    ticketData.files.forEach(file => {
+      formData.append('files', file);
+    });
+    const response = await axios.post(API_URL, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } else {
+    // No files, send as JSON
+    const response = await axios.post(API_URL, ticketData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  }
 };
 
 // Get user tickets (or all tickets for staff/admin, backend handles logic)

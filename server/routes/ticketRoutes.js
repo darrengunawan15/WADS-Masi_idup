@@ -4,6 +4,12 @@ const { createTicket, getTickets, getTicketById, updateTicket, deleteTicket, ass
 const { addComment, getComments } = require('../controllers/commentController'); // Import comment controller functions
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { check } = require('express-validator'); // Import check
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+}).array('files', 10); // Accept up to 10 files per ticket
 
 // Add a middleware to log the request body before comment routes are used
 router.use('/:ticketId/comments', (req, res, next) => {
@@ -134,7 +140,7 @@ router.route('/stats/response-time').get(protect, authorize(['staff', 'admin']),
  *         description: Not authorized
  */
 router.route('/')
-  .post(protect, [
+  .post(protect, upload, [
     check('subject', 'Subject is required').not().isEmpty(),
     check('description', 'Description is required').not().isEmpty(),
     check('category', 'Invalid category ID').optional().isMongoId(),

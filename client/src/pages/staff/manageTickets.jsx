@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getTickets, reset } from '../../redux/slices/ticketSlice';
 import Spinner from '../../components/Spinner';
 import { format } from 'date-fns';
+import NavbarAdmin from '../../components/navbarAdmin';
+import NavbarStaff from '../../components/navbarStaff';
 
 const ManageTickets = () => {
     const navigate = useNavigate();
@@ -31,10 +33,32 @@ const ManageTickets = () => {
     // Filter tickets based on status and search query
     const staffId = String(user?._id).trim();
     const filteredTickets = tickets.filter(ticket => {
-        // Only consider tickets assigned to this staff
+        // Admin: show all tickets
+        if (user?.role === 'admin') {
+            let matchesStatus = false;
+            if (selectedStatus === 'all') {
+                matchesStatus = true;
+            } else if (selectedStatus === 'unassigned') {
+                matchesStatus = !ticket.assignedTo;
+            } else if (selectedStatus === 'in progress' && ticket.status === 'in progress') {
+                matchesStatus = true;
+            } else if (selectedStatus === 'resolved' && ticket.status === 'resolved') {
+                matchesStatus = true;
+            } else if (selectedStatus === 'new') {
+                const authorIds = (ticket.comments || [])
+                    .map(comment => comment && comment.author && comment.author._id ? String(comment.author._id).trim() : null)
+                    .filter(id => id !== null);
+                const hasStaffComment = authorIds.includes(staffId);
+                matchesStatus = ticket.status !== 'resolved' && !hasStaffComment;
+            }
+            const realDataMatchesSearch = ticket._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                        (ticket.customer?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                        ticket.subject.toLowerCase().includes(searchQuery.toLowerCase());
+            return matchesStatus && realDataMatchesSearch;
+        }
+        // Staff: Only consider tickets assigned to this staff
         const isAssignedToStaff = ticket.assignedTo && String(ticket.assignedTo._id).trim() === staffId;
         if (!isAssignedToStaff) return false;
-
         let matchesStatus = false;
         if (selectedStatus === 'all') {
             matchesStatus = true;
@@ -43,22 +67,10 @@ const ManageTickets = () => {
         } else if (selectedStatus === 'resolved' && ticket.status === 'resolved') {
             matchesStatus = true;
         } else if (selectedStatus === 'new') {
-            // Show tickets assigned to staff, not resolved, and staff has not commented
             const authorIds = (ticket.comments || [])
                 .map(comment => comment && comment.author && comment.author._id ? String(comment.author._id).trim() : null)
                 .filter(id => id !== null);
             const hasStaffComment = authorIds.includes(staffId);
-
-            // Debug log for development
-            console.log('NEW FILTER CHECK:', {
-                ticketId: ticket._id,
-                assignedTo: ticket.assignedTo?._id,
-                staffId,
-                status: ticket.status,
-                authorIds,
-                hasStaffComment
-            });
-
             matchesStatus = ticket.status !== 'resolved' && !hasStaffComment;
         }
         const realDataMatchesSearch = ticket._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -99,6 +111,9 @@ const ManageTickets = () => {
         }
     };
 
+    // Render correct navbar
+    const Navbar = user?.role === 'admin' ? NavbarAdmin : NavbarStaff;
+
     if (isLoading) {
         return <Spinner />;
     }
@@ -108,8 +123,9 @@ const ManageTickets = () => {
     }
 
     return (
-        <div className={`fixed inset-0 bg-gray-50 transition-all duration-300 ml-20`}>
-            <div className="p-6">
+        <div className="flex h-screen overflow-hidden relative">
+            <Navbar />
+            <div className={`flex-1 bg-gray-50 p-6 h-screen overflow-y-auto transition-all duration-300 ml-20`}>
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-gray-800">Manage Tickets</h1>
                     <p className="text-gray-600">View and manage customer support tickets</p>
@@ -137,6 +153,9 @@ const ManageTickets = () => {
                                 }}
                             >
                                 <option value="all" className="cursor-pointer">All Status</option>
+                                {user?.role === 'admin' && (
+                                    <option value="unassigned" className="cursor-pointer">Unassigned</option>
+                                )}
                                 <option value="new" className="cursor-pointer">New</option>
                                 <option value="in progress" className="cursor-pointer">In Progress</option>
                                 <option value="resolved" className="cursor-pointer">Resolved</option>
