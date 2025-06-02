@@ -235,6 +235,58 @@ const updateUser = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+const updateProfile = asyncHandler(async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400);
+    throw new Error(errors.array()[0].msg);
+  }
+
+  console.log('Profile update request received');
+  const user = await User.findById(req.user._id);
+  console.log('User found:', user ? user.email : 'None');
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  const { name, currentPassword, newPassword } = req.body;
+
+  // Update name only
+  if (name) {
+    user.name = name;
+  }
+
+  // Handle password update if provided
+  if (currentPassword && newPassword) {
+    const isMatch = await user.matchPassword(currentPassword);
+    if (!isMatch) {
+      res.status(400);
+      throw new Error('Current password is incorrect');
+    }
+    user.password = newPassword;
+  }
+
+  // Handle profile picture update if provided
+  if (req.file) {
+    user.profilePicture = req.file.path;
+  }
+
+  await user.save();
+
+  res.status(200).json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    profilePicture: user.profilePicture,
+  });
+});
+
 module.exports = {
   registerUser,
   loginUser,
@@ -242,4 +294,5 @@ module.exports = {
   logoutUser,
   getAllUsers,
   updateUser,
+  updateProfile,
 }; 

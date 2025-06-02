@@ -6,6 +6,9 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
+const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
 
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
@@ -54,8 +57,18 @@ connectDB();
 
 const app = express();
 
-// Middleware to parse JSON requests
+// Middleware
+app.use(cors());
 app.use(express.json());
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads', 'profile-pictures');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Basic route for testing
 app.get('/', (req, res) => {

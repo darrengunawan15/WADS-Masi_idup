@@ -1,8 +1,37 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser, refreshAccessToken, logoutUser, getAllUsers, updateUser } = require('../controllers/userController');
+const { registerUser, loginUser, refreshAccessToken, logoutUser, getAllUsers, updateUser, updateProfile } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { check } = require('express-validator');
+const multer = require('multer');
+const path = require('path');
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/profile-pictures/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    const filetypes = /jpeg|jpg|png|gif/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Only image files are allowed!'));
+  }
+});
 
 /**
  * @swagger
@@ -197,5 +226,72 @@ router.get('/', protect, authorize(['admin']), getAllUsers);
  */
 // Admin route to update a user
 router.put('/:userId', protect, authorize(['admin']), updateUser);
+
+/**
+ * @swagger
+ * /api/users/profile:
+ *   put:
+ *     summary: Update user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: User's full name
+ *               currentPassword:
+ *                 type: string
+ *                 format: password
+ *                 description: Current password (required if changing password)
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 description: New password (required if changing password)
+ *               profilePicture:
+ *                 type: string
+ *                 format: binary
+ *                 description: Profile picture file (JPEG, PNG, or GIF, max 5MB)
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *                 profilePicture:
+ *                   type: string
+ *                   description: Path to the uploaded profile picture
+ *       400:
+ *         description: Invalid input or validation error
+ *       401:
+ *         description: Not authenticated
+ *       404:
+ *         description: User not found
+ */
+// Profile update route
+router.put(
+  '/profile',
+  protect,
+  upload.single('profilePicture'),
+  [
+    check('name', 'Name is required').not().isEmpty(),
+  ],
+  updateProfile
+);
 
 module.exports = router;

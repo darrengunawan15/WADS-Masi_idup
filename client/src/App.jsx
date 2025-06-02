@@ -20,6 +20,7 @@ import DashboardCustomer from './pages/customer/dashboardCustomer';
 import ChatSupport from './pages/customer/chatSupport';
 import NavbarCustomer from './components/navbarCustomer';
 import MyTickets from './pages/customer/myTickets';
+import Profile from './pages/profile';
 
 function App() {
   return (
@@ -129,6 +130,18 @@ function App() {
                 <main className="flex-1 transition-all duration-300">
                   <ChatSupport />
                 </main>
+              </div>
+            }
+          />
+        </Route>
+
+        {/* Profile route accessible to all authenticated users */}
+        <Route element={<PrivateRoute />}>
+          <Route
+            path="/profile"
+            element={
+              <div className="flex-1 transition-all duration-300">
+                <Profile />
               </div>
             }
           />

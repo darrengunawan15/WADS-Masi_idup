@@ -32,6 +32,10 @@ const userSchema = mongoose.Schema(
       enum: ['active', 'inactive'],
       default: 'active',
     },
+    profilePicture: {
+      type: String,
+      default: null,
+    },
     refreshTokens: [String], // Add refreshTokens field as an array of strings
   },
   {
