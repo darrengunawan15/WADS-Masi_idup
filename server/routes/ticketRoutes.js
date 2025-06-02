@@ -197,7 +197,7 @@ router.get('/customer', protect, getCustomerTickets);
  *                 type: string
  *               status:
  *                 type: string
- *                 enum: [open, in progress, closed]
+ *                 enum: [unassigned, in progress, resolved]
  *               assignedTo:
  *                 type: string # Assuming user ID is a string
  *               category:
@@ -244,7 +244,7 @@ router.route('/:id')
   .put(protect, [
     check('subject', 'Subject is required').optional().not().isEmpty(),
     check('description', 'Description is required').optional().not().isEmpty(),
-    check('status', 'Invalid status').optional().isIn(['open', 'in progress', 'closed']),
+    check('status', 'Invalid status').optional().isIn(['unassigned', 'in progress', 'resolved']),
     check('assignedTo', 'Invalid assignedTo user ID').optional().isMongoId(),
     check('category', 'Invalid category ID').optional().isMongoId(),
   ], updateTicket) // Staff, Admin, (and potentially customer for status) can update a ticket, with validation

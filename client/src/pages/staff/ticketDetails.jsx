@@ -17,7 +17,6 @@ const TicketDetails = () => {
     const [newCommentContent, setNewCommentContent] = useState('');
     const [ticketStatusLocal, setTicketStatusLocal] = useState('');
     const [assignedToUserLocal, setAssignedToUserLocal] = useState('');
-    const [selectedFile, setSelectedFile] = useState(null);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [pendingStatus, setPendingStatus] = useState('');
 
@@ -122,22 +121,6 @@ const TicketDetails = () => {
         dispatch(addComment({ ticketId: ticketId, content: newCommentContent }));
 
         setNewCommentContent('');
-    };
-
-    const handleFileChange = (e) => {
-        setSelectedFile(e.target.files[0]);
-    };
-
-    const handleUploadFile = (e) => {
-        e.preventDefault();
-        if (!selectedFile) return;
-
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-
-        dispatch(uploadFile({ ticketId, fileData: formData }));
-
-        setSelectedFile(null);
     };
 
     if (isLoading) {
@@ -291,22 +274,6 @@ const TicketDetails = () => {
                             </div>
                         )}
 
-                        {canInteract && (
-                            <div className='mt-4'>
-                                <h4 className='text-md font-bold mb-2'>Upload File</h4>
-                                <form onSubmit={handleUploadFile}>
-                                    <input
-                                        type='file'
-                                        onChange={handleFileChange}
-                                        className='form-input mt-1 block w-full'
-                                    />
-                                    <button type='submit' className='bg-green-500 text-white px-4 py-2 rounded mt-2 hover:bg-green-600 transition-colors' disabled={!selectedFile}>
-                                        Upload
-                                    </button>
-                                </form>
-                            </div>
-                        )}
-
                     </div>
 
                 </div>
@@ -342,6 +309,18 @@ const TicketDetails = () => {
                                         placeholder='Enter Staff/Admin User ID'
                                         className='form-input block w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-[var(--hotpink)] focus:border-transparent'
                                     />
+                                </div>
+
+                                <div className='mb-4'>
+                                    <button
+                                        onClick={() => navigate('/customer-support')}
+                                        className='w-full px-4 py-2 bg-[var(--hotpink)] text-white rounded-lg hover:bg-[var(--roseberry)] transition-colors flex items-center justify-center gap-2'
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                                        </svg>
+                                        Chat with Customer
+                                    </button>
                                 </div>
                             </div>
                         </div>

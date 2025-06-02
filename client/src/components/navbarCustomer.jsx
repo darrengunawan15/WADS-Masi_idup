@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import logo from '../assets/react.svg';
+import logo from '../assets/logo.png';
 
 const NavbarCustomer = () => {
     const navigate = useNavigate();

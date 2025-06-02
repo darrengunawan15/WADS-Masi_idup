@@ -33,6 +33,19 @@ const Navbar = () => {
         }
     };
 
+    const handleSectionClick = (sectionId) => {
+        // If we're not on the home page, navigate there first
+        if (window.location.pathname !== '/') {
+            navigate('/');
+            // Use setTimeout to ensure navigation happens before scrolling
+            setTimeout(() => {
+                scrollToSection(sectionId);
+            }, 100);
+        } else {
+            scrollToSection(sectionId);
+        }
+    };
+
     return (
         <nav className="bg-white shadow-md fixed w-full top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,26 +65,26 @@ const Navbar = () => {
                     {/* Desktop Menu */}
                     <div className="hidden md:flex items-center space-x-8">
                         <button 
-                            onClick={() => scrollToSection('about')}
-                            className="text-[var(--roseberry)] hover:text-[var(--hotpink)] text-lg font-medium transition-colors cursor-pointer"
+                            onClick={() => handleSectionClick('about')}
+                            className="text-[var(--roseberry)] hover:text-[var(--hotpink)] font-medium cursor-pointer"
                         >
                             About Us
                         </button>
                         <button 
-                            onClick={() => scrollToSection('products')}
-                            className="text-[var(--roseberry)] hover:text-[var(--hotpink)] text-lg font-medium transition-colors cursor-pointer"
+                            onClick={() => handleSectionClick('products')}
+                            className="text-[var(--roseberry)] hover:text-[var(--hotpink)] font-medium cursor-pointer"
                         >
                             Our Products
                         </button>
                         <button 
-                            onClick={() => scrollToSection('faqs')}
-                            className="text-[var(--roseberry)] hover:text-[var(--hotpink)] text-lg font-medium transition-colors cursor-pointer"
+                            onClick={() => handleSectionClick('faqs')}
+                            className="text-[var(--roseberry)] hover:text-[var(--hotpink)] font-medium cursor-pointer"
                         >
                             FAQs
                         </button>
                         <button 
-                            onClick={() => scrollToSection('discover')}
-                            className="text-[var(--roseberry)] hover:text-[var(--hotpink)] text-lg font-medium transition-colors cursor-pointer"
+                            onClick={() => handleSectionClick('discover')}
+                            className="text-[var(--roseberry)] hover:text-[var(--hotpink)] font-medium cursor-pointer"
                         >
                             Discover Us
                         </button>
@@ -116,7 +129,7 @@ const Navbar = () => {
                         <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                             <button 
                                 onClick={() => {
-                                    scrollToSection('about');
+                                    handleSectionClick('about');
                                     setIsMenuOpen(false);
                                 }}
                                 className="w-full text-left px-3 py-2 text-[var(--roseberry)] hover:text-[var(--hotpink)] font-medium cursor-pointer"
@@ -125,7 +138,7 @@ const Navbar = () => {
                             </button>
                             <button 
                                 onClick={() => {
-                                    scrollToSection('products');
+                                    handleSectionClick('products');
                                     setIsMenuOpen(false);
                                 }}
                                 className="w-full text-left px-3 py-2 text-[var(--roseberry)] hover:text-[var(--hotpink)] font-medium cursor-pointer"
@@ -134,7 +147,7 @@ const Navbar = () => {
                             </button>
                             <button 
                                 onClick={() => {
-                                    scrollToSection('faqs');
+                                    handleSectionClick('faqs');
                                     setIsMenuOpen(false);
                                 }}
                                 className="w-full text-left px-3 py-2 text-[var(--roseberry)] hover:text-[var(--hotpink)] font-medium cursor-pointer"
@@ -143,7 +156,7 @@ const Navbar = () => {
                             </button>
                             <button 
                                 onClick={() => {
-                                    scrollToSection('discover');
+                                    handleSectionClick('discover');
                                     setIsMenuOpen(false);
                                 }}
                                 className="w-full text-left px-3 py-2 text-[var(--roseberry)] hover:text-[var(--hotpink)] font-medium cursor-pointer"

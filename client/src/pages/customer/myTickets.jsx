@@ -68,7 +68,7 @@ const MyTickets = () => {
 
     return (
         <div className="flex-1 bg-gray-50 p-6 h-screen overflow-hidden ml-20">
-            <div className="flex justify-between items-center mb-6">
+            <div className={`flex justify-between items-center mb-6 ${selectedTicket ? 'blur-sm' : ''}`}>
                 <h1 className="text-2xl font-bold text-gray-800">My Tickets</h1>
                 <button
                     onClick={() => setIsCreateTicketModalOpen(true)}
@@ -78,7 +78,7 @@ const MyTickets = () => {
                 </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 h-[calc(100vh-12rem)]">
+            <div className={`grid grid-cols-2 gap-6 h-[calc(100vh-12rem)] ${selectedTicket ? 'blur-sm' : ''}`}>
                 {/* Open Tickets */}
                 <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow h-full">
                     <div className="flex justify-between items-center mb-4">
@@ -176,8 +176,8 @@ const MyTickets = () => {
 
             {/* Ticket Details Modal */}
             {selectedTicket && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
-                    <div className="bg-white rounded-xl p-6 w-[800px] max-h-[90vh] overflow-y-auto">
+                <div className="fixed inset-0 flex items-center justify-center z-[9999]">
+                    <div className="bg-white rounded-xl p-6 w-[800px] max-h-[90vh] overflow-y-auto shadow-xl">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-semibold text-gray-800">Ticket Details</h2>
                             <button
@@ -207,10 +207,6 @@ const MyTickets = () => {
                                 <span className={`mt-1 px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(selectedTicket.status)}`}>
                                     {selectedTicket.status.charAt(0).toUpperCase() + selectedTicket.status.slice(1)}
                                 </span>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Priority</label>
-                                <p className="mt-1 text-sm text-gray-900">{selectedTicket.priority}</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Created At</label>

@@ -275,22 +275,6 @@ const CustomerSupport = () => {
                             <div className="flex-shrink-0 bg-white px-6 py-4 border-t">
                                 <form onSubmit={handleSendMessage} className="flex items-center space-x-4">
                                     <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        onChange={handleFileUpload}
-                                        className="hidden"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => fileInputRef.current.click()}
-                                        className="p-2 text-gray-500 hover:text-[var(--hotpink)] transition-colors"
-                                        title="Attach File"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.414 6.586a2 2 0 000 2.828l6.586 6.586a2 2 0 002.828 0L19 14.828" />
-                                        </svg>
-                                    </button>
-                                    <input
                                         type="text"
                                         value={message}
                                         onChange={(e) => setMessage(e.target.value)}
