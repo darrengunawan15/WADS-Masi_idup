@@ -147,7 +147,26 @@ router.route('/')
   ], createTicket) // Only authenticated users (customers) can create tickets, with validation
   .get(protect, authorize(['staff', 'admin']), getTickets); // Only staff and admin can get all tickets
 
-// Route for customers to get their own tickets
+/**
+ * @swagger
+ * /api/tickets/customer:
+ *   get:
+ *     summary: Get all tickets for the authenticated customer
+ *     tags: [Tickets]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of tickets for the customer
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Ticket'
+ *       401:
+ *         description: Not authenticated
+ */
 router.get('/customer', protect, getCustomerTickets);
 
 /**
