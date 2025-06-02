@@ -3,12 +3,12 @@ name: masi idup CI/CD
 on:
   push:
     branches:
-      - main
+      - master
     paths-ignore:
       - "README.md"
   pull_request:
     branches:
-      - main
+      - master
 
 jobs:
   continuous-integration:
@@ -65,5 +65,5 @@ jobs:
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
-          PORT: ${{ secrets.PORT }}          
+          PORT: 3002       
           NODE_ENV: ${{ secrets.NODE_ENV }}          
