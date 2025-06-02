@@ -184,51 +184,6 @@ router.get('/', protect, authorize(['admin']), getAllUsers);
 
 /**
  * @swagger
- * /api/users/{userId}:
- *   put:
- *     summary: Update a user (Admin only)
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: userId
- *         schema:
- *           type: string
- *         required: true
- *         description: The user ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *                 format: email
- *               role:
- *                 type: string
- *                 enum: [customer, staff, admin]
- *     responses:
- *       200:
- *         description: User updated successfully
- *       400:
- *         description: Invalid input
- *       401:
- *         description: Not authenticated
- *       403:
- *         description: Not authorized
- *       404:
- *         description: User not found
- */
-// Admin route to update a user
-router.put('/:userId', protect, authorize(['admin']), updateUser);
-
-/**
- * @swagger
  * /api/users/profile:
  *   put:
  *     summary: Update user profile
@@ -293,5 +248,50 @@ router.put(
   ],
   updateProfile
 );
+
+/**
+ * @swagger
+ * /api/users/{userId}:
+ *   put:
+ *     summary: Update a user (Admin only)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The user ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               role:
+ *                 type: string
+ *                 enum: [customer, staff, admin]
+ *     responses:
+ *       200:
+ *         description: User updated successfully
+ *       400:
+ *         description: Invalid input
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized
+ *       404:
+ *         description: User not found
+ */
+// Admin route to update a user
+router.put('/:userId', protect, authorize(['admin']), updateUser);
 
 module.exports = router;

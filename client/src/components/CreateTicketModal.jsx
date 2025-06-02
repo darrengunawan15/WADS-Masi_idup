@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createTicket } from '../redux/slices/ticketSlice';
 import { getCategories } from '../redux/slices/categorySlice';
 
-const CreateTicketModal = ({ isOpen, onClose }) => {
+const CreateTicketModal = ({ isOpen, onClose, onTicketCreated }) => {
     const dispatch = useDispatch();
     const { categories, isLoading: isCategoriesLoading } = useSelector((state) => state.categories || { categories: [], isLoading: false });
     const [formData, setFormData] = useState({
@@ -48,6 +48,7 @@ const CreateTicketModal = ({ isOpen, onClose }) => {
         setIsLoading(true);
         try {
             await dispatch(createTicket(formData)).unwrap();
+            if (onTicketCreated) onTicketCreated();
             onClose();
         } catch (error) {
             console.error('Failed to create ticket:', error);

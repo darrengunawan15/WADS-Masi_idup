@@ -19,6 +19,12 @@ const Profile = () => {
   });
   const [previewImage, setPreviewImage] = useState(null);
   const fileInputRef = useRef(null);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -171,6 +177,35 @@ const Profile = () => {
     }
   };
 
+  // Separate handler for password change
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    if (!passwordData.currentPassword || !passwordData.newPassword) {
+      toast.error('Both current and new password are required');
+      return;
+    }
+    if (passwordData.newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters long');
+      return;
+    }
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name || user.name); // name is required by backend
+      formDataToSend.append('currentPassword', passwordData.currentPassword);
+      formDataToSend.append('newPassword', passwordData.newPassword);
+      await dispatch(updateProfile(formDataToSend)).unwrap();
+      toast.success('Password updated successfully');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setIsChangingPassword(false);
+    } catch (error) {
+      toast.error(error.message || 'Failed to update password. Please try again.');
+    }
+  };
+
   const handleBack = () => {
     switch (user?.role) {
       case 'customer':
@@ -205,12 +240,14 @@ const Profile = () => {
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Profile Settings</h2>
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white bg-[var(--hotpink)] hover:bg-[var(--roseberry)] focus:outline-none"
-            >
-              {isEditing ? 'Cancel' : 'Edit Profile'}
-            </button>
+            {!isEditing && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white bg-[var(--hotpink)] hover:bg-[var(--roseberry)] focus:outline-none"
+              >
+                Edit Profile
+              </button>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -251,11 +288,6 @@ const Profile = () => {
                   className="hidden"
                 />
               </div>
-              {isEditing && (
-                <p className="text-sm text-gray-500">
-                  Click the camera icon to change your profile picture
-                </p>
-              )}
             </div>
 
             <div>
@@ -289,81 +321,98 @@ const Profile = () => {
             </div>
 
             {isEditing && (
-              <>
-                <div>
-                  <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    name="currentPassword"
-                    id="currentPassword"
-                    value={formData.currentPassword}
-                    onChange={handleChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--blush)] focus:border-[var(--blush)] sm:text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    name="newPassword"
-                    id="newPassword"
-                    value={formData.newPassword}
-                    onChange={handleChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--blush)] focus:border-[var(--blush)] sm:text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                    Confirm New Password
-                  </label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    id="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--blush)] focus:border-[var(--blush)] sm:text-sm"
-                  />
-                </div>
-              </>
-            )}
-
-            {isEditing && (
-              <div className="flex justify-end gap-4 mt-6">
+              <div className="flex justify-between gap-4 mt-6 items-center">
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsEditing(false);
-                    // Reset form data to original values
-                    setFormData({
-                      ...formData,
-                      name: user.name || '',
-                      currentPassword: '',
-                      newPassword: '',
-                      confirmPassword: '',
-                      profilePicture: null
-                    });
-                    setPreviewImage(user.profilePicture || null);
-                  }}
-                  className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md cursor-pointer"
+                  onClick={() => setIsChangingPassword((prev) => !prev)}
+                  className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition-all duration-150 ${isChangingPassword ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'text-white bg-[var(--hotpink)] hover:bg-[var(--roseberry)] focus:outline-none'}`}
+                  disabled={isChangingPassword}
+                >
+                  Change Password
+                </button>
+                <div className="flex gap-4 ml-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditing(false);
+                      setIsChangingPassword(false);
+                      setFormData({
+                        ...formData,
+                        name: user.name || '',
+                        currentPassword: '',
+                        newPassword: '',
+                        confirmPassword: '',
+                        profilePicture: null
+                      });
+                      setPreviewImage(user.profilePicture || null);
+                    }}
+                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-white bg-[var(--hotpink)] hover:bg-[var(--roseberry)] rounded-md cursor-pointer"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            )}
+          </form>
+
+          {isChangingPassword && (
+            <form onSubmit={handlePasswordChange} className="space-y-4 mt-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Current Password</label>
+                <input
+                  type="password"
+                  name="currentPassword"
+                  value={passwordData.currentPassword}
+                  onChange={e => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--blush)] focus:border-[var(--blush)] sm:text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">New Password</label>
+                <input
+                  type="password"
+                  name="newPassword"
+                  value={passwordData.newPassword}
+                  onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--blush)] focus:border-[var(--blush)] sm:text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Confirm New Password</label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={passwordData.confirmPassword}
+                  onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--blush)] focus:border-[var(--blush)] sm:text-sm"
+                  required
+                />
+              </div>
+              <div className="flex gap-4 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsChangingPassword(false)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm text-white bg-[var(--hotpink)] hover:bg-[var(--roseberry)] rounded-md cursor-pointer"
+                  className="py-2 px-4 bg-[var(--hotpink)] text-white rounded-md hover:bg-[var(--roseberry)] focus:outline-none"
                 >
-                  Save Changes
+                  Save Password
                 </button>
               </div>
-            )}
-          </form>
+            </form>
+          )}
         </div>
       </div>
     </div>

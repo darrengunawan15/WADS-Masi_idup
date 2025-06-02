@@ -68,7 +68,6 @@ const createTicket = async (req, res) => {
       description,
       customer: customerId,
       category: category || null, // Category is optional
-      status: 'open', // Default status
     });
 
     res.status(201).json(ticket);

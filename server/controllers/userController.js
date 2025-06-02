@@ -3,6 +3,7 @@ const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs');
 
 // @desc    Register new user
 // @route   POST /api/users
@@ -80,6 +81,11 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ email });
   console.log('User found:', user ? user.email : 'None'); // Log if user found
+
+  if (user) {
+    console.log('DEBUG: Entered password:', password);
+    console.log('DEBUG: Stored hash:', user.password);
+  }
 
   // Check if user exists and password matches
   if (user && (await user.matchPassword(password))) {
@@ -239,6 +245,7 @@ const updateUser = asyncHandler(async (req, res) => {
 // @route   PUT /api/users/profile
 // @access  Private
 const updateProfile = asyncHandler(async (req, res) => {
+  console.log('DEBUG updateProfile: path=', req.path, 'method=', req.method, 'user=', req.user);
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400);
@@ -254,35 +261,50 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 
-  const { name, currentPassword, newPassword } = req.body;
+  const { name, currentPassword, newPassword, phoneNumber } = req.body;
 
-  // Update name only
-  if (name) {
-    user.name = name;
+  // Enforce required name field
+  if (!name) {
+    res.status(400);
+    throw new Error('Name is required');
+  }
+  user.name = name;
+
+  // Update phone number if provided
+  if (phoneNumber !== undefined) {
+    user.phoneNumber = phoneNumber;
   }
 
   // Handle password update if provided
   if (currentPassword && newPassword) {
+    console.log('DEBUG: Attempting password change');
+    console.log('DEBUG: Entered currentPassword:', currentPassword);
     const isMatch = await user.matchPassword(currentPassword);
+    console.log('DEBUG: isMatch result:', isMatch);
     if (!isMatch) {
       res.status(400);
       throw new Error('Current password is incorrect');
     }
+    console.log('DEBUG: New password before hashing:', newPassword);
     user.password = newPassword;
+    console.log('DEBUG: New password set (pre-save hook will hash):', user.password);
   }
 
   // Handle profile picture update if provided
   if (req.file) {
-    user.profilePicture = req.file.path;
+    // Store only the filename, not the full path
+    user.profilePicture = req.file.filename;
   }
 
   await user.save();
+  console.log('DEBUG: User document after save:', user);
 
   res.status(200).json({
     _id: user._id,
     name: user.name,
     email: user.email,
     role: user.role,
+    phoneNumber: user.phoneNumber,
     profilePicture: user.profilePicture,
   });
 });

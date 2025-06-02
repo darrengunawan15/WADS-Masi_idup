@@ -227,9 +227,10 @@ const MyTickets = () => {
                 </div>
             )}
 
-            <CreateTicketModal 
+            <CreateTicketModal
                 isOpen={isCreateTicketModalOpen}
                 onClose={() => setIsCreateTicketModalOpen(false)}
+                onTicketCreated={() => dispatch(getCustomerTickets())}
             />
         </div>
     );
