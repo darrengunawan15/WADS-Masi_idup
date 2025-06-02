@@ -360,7 +360,7 @@ const AssignTickets = () => {
                             </div>
                             <p className="mb-6">
                                 Are you sure you want to assign ticket {selectedTicket._id} to{' '}
-                                <span className="font-medium">{staffMembers.find(s => s._id === parseInt(selectedStaff))?.name}</span>?
+                                <span className="font-medium">{staffMembers.find(s => s._id === selectedStaff)?.name}</span>?
                             </p>
                             <div className="flex justify-end gap-4">
                                 <button
