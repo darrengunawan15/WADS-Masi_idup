@@ -51,14 +51,14 @@ jobs:
       # - name: Pull Latest Frontend Image
         # run: docker pull ${{ secrets.DOCKER_USERNAME }}/finalprojectwads-frontend:latest
 
-      - name: Stop and Remove Old Containers
-        run: |
-          docker compose down || true
-          docker system prune -f
+      # - name: Stop and Remove Old Containers
+      #   run: |
+      #     docker compose down || true
+      #     docker system prune -f
 
-      - name: Run New Containers
-        run: |
-          docker compose up -d
+      # - name: Run New Containers
+      #   run: |
+      #     docker compose up -d
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
