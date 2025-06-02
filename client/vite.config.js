@@ -1,17 +1,25 @@
 import { defineConfig } from 'vite'
-import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [tailwindcss(), react()],
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/api'),
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => {
+  return {
+    server: {
+      proxy: {
+        "/api": {
+          target: mode === "development"
+            ? "http://localhost:5000"
+            : "https://2425-wads-l4acg1-server.csbihub.id",
+          changeOrigin: true,
+          secure: mode !== "development",
+          ws: true,
+        },
       },
-    }
-  },
+    },
+    build: {
+      outDir: "dist",
+    },
+    plugins: [react(), tailwindcss()],
+  }
 })

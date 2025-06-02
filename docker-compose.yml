@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  backend:
+    image: darrengun15/finalproject-backend:latest
+    restart: always
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      JWT_SECRET: ${JWT_SECRET}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      PORT: ${PORT}
+      NODE_ENV: ${NODE_ENV}
+    ports:
+      - "3002:3002"
+
+  frontend:
+    image: darrengun15/finalproject-frontend:latest
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "3001:3001"
