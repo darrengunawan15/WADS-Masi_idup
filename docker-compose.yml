@@ -13,7 +13,7 @@ services:
       PORT: ${PORT}
       NODE_ENV: ${NODE_ENV}
     ports:
-      - "3002:3002"
+      - "3002:5000"
 
   frontend:
     image: darrengun15/finalproject-frontend:latest
