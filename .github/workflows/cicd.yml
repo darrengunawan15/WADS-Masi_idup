@@ -66,4 +66,6 @@ jobs:
           CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
           CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
           PORT: 3002       
-          NODE_ENV: ${{ secrets.NODE_ENV }}          
+          NODE_ENV: ${{ secrets.NODE_ENV }}  
+          DENSER_API_KEY: ${{ secrets.DENSER_API_KEY }}
+          DENSER_CHATBOT_ID: ${{ secrets.DENSER_CHATBOT_ID }}

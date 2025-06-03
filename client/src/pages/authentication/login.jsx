@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -91,16 +92,30 @@ const Login = () => {
                                         <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
                                             Password
                                         </label>
-                                        <input
-                                            type="password"
-                                            id="password"
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            className="mt-2 p-3 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--blush)]"
-                                            placeholder="Enter your password"
-                                            required
-                                            disabled={isLoading}
-                                        />
+                                        <div className="relative">
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                id="password"
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                className="mt-2 p-3 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--blush)] pr-10"
+                                                placeholder="Enter your password"
+                                                required
+                                                disabled={isLoading}
+                                            />
+                                            <button
+                                                type="button"
+                                                tabIndex={-1}
+                                                className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-700 focus:outline-none"
+                                                onClick={() => setShowPassword((v) => !v)}
+                                            >
+                                                {showPassword ? (
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="2"/></svg>
+                                                ) : (
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-.274.832-.64 1.624-1.09 2.354M15.54 15.54A5.978 5.978 0 0112 17c-3.314 0-6-2.686-6-6 0-.657.1-1.29.282-1.885" /></svg>
+                                                )}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

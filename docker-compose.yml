@@ -12,6 +12,8 @@ services:
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
       PORT: ${PORT}
       NODE_ENV: ${NODE_ENV}
+      DENSER_API_KEY: ${DENSER_API_KEY}
+      DENSER_CHATBOT_ID: ${DENSER_CHATBOT_ID}
     ports:
       - "3002:3002"
 

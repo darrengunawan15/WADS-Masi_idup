@@ -162,7 +162,6 @@ const ManageUsers = () => {
         setIsLoading(true);
         try {
             const token = localStorage.getItem('accessToken');
-            console.log('Token being used (role):', token);
             await adminService.updateUser(user._id, { role: newRole }, token);
             const usersRes = await adminService.getAllUsers(token);
             setUsers(usersRes);
@@ -183,7 +182,28 @@ const ManageUsers = () => {
                 style: { width: '400px', fontSize: '16px' }
             });
         } catch (err) {
-            toast.error('Failed to update user role');
+            // Show backend error message if unresolved tickets exist
+            const errorMsg = err.response && err.response.data && err.response.data.message
+                ? err.response.data.message
+                : 'Failed to update user role';
+            // Revert dropdown immediately
+            setPendingRoleChanges(prev => {
+                const updated = { ...prev };
+                updated[user._id] = user.role; // revert to original role
+                return updated;
+            });
+            console.log('TOAST ERROR:', errorMsg); // Debug log
+            toast.error(errorMsg, {
+                position: 'top-center',
+                autoClose: 4000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: 'light',
+                style: { width: '400px', fontSize: '16px' }
+            });
         } finally {
             setIsLoading(false);
         }
@@ -269,7 +289,6 @@ const ManageUsers = () => {
         <div className="flex">
             <NavbarAdmin />
             <div className={`flex-1 bg-gray-50 p-6 h-screen overflow-auto transition-all duration-300 ${sidebarWidth === '20' ? 'ml-20' : 'ml-64'}`}>
-                <ToastContainer />
                 <div className="max-w-7xl mx-auto">
                     <h1 className="text-2xl font-semibold text-gray-800 mb-6">Manage Users</h1>
 

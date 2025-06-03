@@ -3,7 +3,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import Navbar from './components/navbar';
 import Footer from './components/footer';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';  
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
+import React, { useEffect } from 'react';
 import Home from './pages/home';
 import CreateAccount from './pages/authentication/register';
 import Login from './pages/authentication/login';
@@ -38,7 +39,7 @@ function App() {
         draggable
         pauseOnHover
         theme="light"
-        limit={1}
+        style={{ zIndex: 99999 }}
       />
       <Routes>
         <Route element={<PrivateRoute allowedRoles={['staff']} />}>

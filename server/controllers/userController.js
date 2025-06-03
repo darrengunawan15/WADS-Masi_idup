@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const cloudinary = require('cloudinary').v2;
+const Ticket = require('../models/Ticket');
 
 // @desc    Register new user
 // @route   POST /api/users
@@ -225,6 +226,30 @@ const updateUser = asyncHandler(async (req, res) => {
   }
 
   const { name, email, password, role, status } = req.body;
+
+  // Only allow role change if:
+  // - The user is not staff, or
+  // - The new role is not admin/customer, or
+  // - The user is admin changing their own role
+  const isRoleChange = role && role !== user.role;
+  const isStaffToAdminOrCustomer = user.role === 'staff' && (role === 'admin' || role === 'customer');
+  const isSelf = req.user._id.toString() === user._id.toString();
+
+  if (isRoleChange && isStaffToAdminOrCustomer && !isSelf) {
+    // Check for unresolved tickets assigned to this staff
+    const unresolvedTickets = await Ticket.find({ assignedTo: user._id, status: { $ne: 'resolved' } });
+    if (unresolvedTickets.length > 0) {
+      res.status(400);
+      throw new Error('There are still tickets assigned to this staff that are not resolved.');
+    }
+  }
+
+  // Allow admins to change their own role
+  if (isRoleChange && isSelf && user.role === 'admin') {
+    // No restriction
+  } else if (isRoleChange && isStaffToAdminOrCustomer) {
+    // Already checked above
+  }
 
   // Update user fields
   user.name = name || user.name;

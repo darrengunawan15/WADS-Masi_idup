@@ -25,6 +25,9 @@ const Profile = () => {
     confirmPassword: '',
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -365,36 +368,78 @@ const Profile = () => {
             <form onSubmit={handlePasswordChange} className="space-y-4 mt-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Current Password</label>
-                <input
-                  type="password"
-                  name="currentPassword"
-                  value={passwordData.currentPassword}
-                  onChange={e => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--blush)] focus:border-[var(--blush)] sm:text-sm"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showCurrentPassword ? "text" : "password"}
+                    name="currentPassword"
+                    value={passwordData.currentPassword}
+                    onChange={e => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--blush)] focus:border-[var(--blush)] sm:text-sm pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-700 focus:outline-none"
+                    onClick={() => setShowCurrentPassword((v) => !v)}
+                  >
+                    {showCurrentPassword ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="2"/></svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-.274.832-.64 1.624-1.09 2.354M15.54 15.54A5.978 5.978 0 0112 17c-3.314 0-6-2.686-6-6 0-.657.1-1.29.282-1.885" /></svg>
+                    )}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">New Password</label>
-                <input
-                  type="password"
-                  name="newPassword"
-                  value={passwordData.newPassword}
-                  onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--blush)] focus:border-[var(--blush)] sm:text-sm"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    name="newPassword"
+                    value={passwordData.newPassword}
+                    onChange={e => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--blush)] focus:border-[var(--blush)] sm:text-sm pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-700 focus:outline-none"
+                    onClick={() => setShowNewPassword((v) => !v)}
+                  >
+                    {showNewPassword ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="2"/></svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-.274.832-.64 1.624-1.09 2.354M15.54 15.54A5.978 5.978 0 0112 17c-3.314 0-6-2.686-6-6 0-.657.1-1.29.282-1.885" /></svg>
+                    )}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Confirm New Password</label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={passwordData.confirmPassword}
-                  onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--blush)] focus:border-[var(--blush)] sm:text-sm"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    value={passwordData.confirmPassword}
+                    onChange={e => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-[var(--blush)] focus:border-[var(--blush)] sm:text-sm pr-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-700 focus:outline-none"
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                  >
+                    {showConfirmPassword ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="2"/></svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-.274.832-.64 1.624-1.09 2.354M15.54 15.54A5.978 5.978 0 0112 17c-3.314 0-6-2.686-6-6 0-.657.1-1.29.282-1.885" /></svg>
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="flex gap-4 justify-end">
                 <button
