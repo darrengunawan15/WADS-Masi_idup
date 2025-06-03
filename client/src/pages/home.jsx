@@ -1,4 +1,4 @@
-import React, { Component, useState, useRef } from 'react';
+import React, { Component, useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from "lucide-react"; 
 import imgplaceholder from '../assets/img-placeholder.webp';
 import risolImage from "../assets/risol.png"; 
@@ -17,26 +17,49 @@ class Home extends Component {
     render() {
         const ProductCarousel = () => {
             const scrollRef = useRef(null);
-
-            const scroll = (direction) => {
-                if (scrollRef.current) {
-                    scrollRef.current.scrollBy({
-                        left: direction === "left" ? -300 : 300,
-                        behavior: "smooth",
-                    });
-                }
-            };
-
-            const products = [
+            const [productList, setProductList] = useState([
                 { id: 1, name: "Bakcang", image: bakcang },
                 { id: 2, name: "Bubur", image: bubur },
                 { id: 3, name: "Hekeng", image: hekeng },
                 { id: 4, name: "Risol", image: risol1 },
                 { id: 5, name: "Risol Cake", image: risolcake },
                 { id: 6, name: "Siomay", image: siomay },
-                { id: 7, name: "Macaroni Brule", image: macaroniBrule},
-            ];
-
+                { id: 7, name: "Macaroni Brule", image: macaroniBrule },
+            ]);
+        
+            // ID counter to prevent duplicate keys
+            const idCounter = useRef(productList.length + 1);
+        
+            // Auto scroll effect
+            useEffect(() => {
+                const scrollInterval = setInterval(() => {
+                    if (scrollRef.current) {
+                        scrollRef.current.scrollBy({
+                            left: 1,
+                            behavior: "smooth",
+                        });
+                    }
+                }, 30); // Adjust speed by changing this value (lower = faster)
+        
+                return () => clearInterval(scrollInterval);
+            }, []);
+        
+            const handleScroll = () => {
+                const container = scrollRef.current;
+                if (!container) return;
+        
+                const scrollRightEdge = container.scrollLeft + container.clientWidth;
+                const scrollThreshold = container.scrollWidth - 300; // Trigger before actual end
+        
+                if (scrollRightEdge >= scrollThreshold) {
+                    const newProducts = productList.map((product) => ({
+                        ...product,
+                        id: idCounter.current++,
+                    }));
+                    setProductList((prev) => [...prev, ...newProducts]);
+                }
+            };
+        
             return (
                 <div className="relative bg-[#683949] py-24 w-full" id='products'>
                     <div className="px-4">
@@ -45,29 +68,15 @@ class Home extends Component {
                             Discover our handcrafted delights, each product is thoughtfully prepared with premium ingredients, bringing homemade goodness and vibrant flavors to your table.
                         </p>
                     </div>
-
-                    {/* Arrow Buttons */}
-                    <button
-                        onClick={() => scroll("left")}
-                        className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow hover:bg-gray-100"
-                    >
-                        <ChevronLeft className="text-[#683949]" />
-                    </button>
-
-                    <button
-                        onClick={() => scroll("right")}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow hover:bg-gray-100"
-                    >
-                        <ChevronRight className="text-[#683949]" />
-                    </button>
-
+        
                     {/* Product Scroll Container */}
                     <div
                         ref={scrollRef}
+                        onScroll={handleScroll}
                         className="flex space-x-6 overflow-x-auto scroll-smooth px-8 py-4"
                         style={{ scrollSnapType: "x mandatory", scrollbarWidth: "none" }}
                     >
-                        {products.map((product) => (
+                        {productList.map((product) => (
                             <div
                                 key={product.id}
                                 className="min-w-[250px] flex-shrink-0 bg-white p-4 rounded-lg shadow-lg scroll-snap-align"
@@ -84,14 +93,14 @@ class Home extends Component {
                 </div>
             );
         };
-
+      
         const FAQAccordion = () => {
             const [activeIndex, setActiveIndex] = useState(null);
             const toggleFAQ = (index) => setActiveIndex(prev => prev === index ? null : index);
 
             const faqs = [
-                { question: "What is our return policy?", answer: "We offer a 30-day return policy for unused products. Please ensure that the items are in original condition." },
-                { question: "How do I track my order?", answer: "You can track your order by visiting the \"Track Order\" section on our website." },
+                { question: "What is our return policy?", answer: "We offer a 6 hours return policy for unused products. Please ensure that the items are in original condition." },
+                { question: "How do I track my order?", answer: "You can track your order by asking it through WhatsApp." },
                 { question: "Can I cancel my order?", answer: "Yes, orders can be canceled within 12 hours of purchase." },
                 { question: "Do you offer international shipping?", answer: "Currently, we only ship within the country." }
             ];
@@ -135,7 +144,7 @@ class Home extends Component {
                     <p className="text-base leading-7">
                       We take immense pride in our handcrafted selections, made from quality ingredients and seasoned with a personal touch that makes each bite memorable. From our savory classics like Siomay and Hekeng, to our uniquely creative offerings like the golden, crispy Risol Cake, every product is a testament to our commitment to excellence and authenticity.
 
-You can experience the essence of Cihen Kitchen beyond the plate by visiting our Instagram page @cihen_kitchen. There, you’ll find a vibrant showcase of our latest creations, seasonal specials, behind-the-scenes preparation stories, and heartfelt customer testimonials. Our feed is more than just photos — it’s a window into our kitchen and the love we pour into everything we do.
+You can experience the essence of Cihen Kitchen beyond the plate by visiting our Instagram page @cihen_kitchen. There, you'll find a vibrant showcase of our latest creations, seasonal specials, behind-the-scenes preparation stories, and heartfelt customer testimonials. Our feed is more than just photos — it's a window into our kitchen and the love we pour into everything we do.
 
 We update regularly with exciting new content to keep you inspired and connected. 
                             </p>
@@ -150,7 +159,7 @@ We update regularly with exciting new content to keep you inspired and connected
                     <p className="text-base leading-7">
                     The fastest and most convenient way to reach us is through WhatsApp at +62 888-1762-606. Our dedicated customer service team is available to answer your inquiries, take your orders, and offer personalized recommendations tailored to your taste and needs. We value every interaction and aim to make your communication with us as smooth, friendly, and responsive as possible.
 
-We believe in building relationships, not just transactions. Whether you’re a loyal returning customer or someone curious to try us for the first time, your questions and feedback are always welcome. No inquiry is too small — from checking ingredient details and confirming delivery times to helping you decide between our delicious Risol Cake or comforting Bubur, we’re just a message away.
+We believe in building relationships, not just transactions. Whether you're a loyal returning customer or someone curious to try us for the first time, your questions and feedback are always welcome. No inquiry is too small — from checking ingredient details and confirming delivery times to helping you decide between our delicious Risol Cake or comforting Bubur, we're just a message away.
                      </p>
                 </div>
             </div>
@@ -170,7 +179,7 @@ We believe in building relationships, not just transactions. Whether you’re a 
                     <p className="text-lg text-[#683949] text-center md:text-left">
                     Indulge in the rich, creamy, and irresistibly cheesy goodness that brings warmth to your heart 
                     and a smile to your face. At Cihen Kitchen, we believe that comfort food is more than just a meal,
-                    it’s a memory, a moment, a feeling of home. Our dishes are carefully crafted using time-honored recipes, 
+                    it's a memory, a moment, a feeling of home. Our dishes are carefully crafted using time-honored recipes, 
                     high-quality ingredients, and a generous helping of love. Whether you're enjoying a quiet night in or 
                     sharing with family and friends, every bite is designed to nourish both your body and soul. 
                     Come experience the magic where tradition meets modern delight, because great food should always feel this good.
