@@ -340,11 +340,15 @@ const ChatSupport = () => {
                                         onChange={(e) => setMessage(e.target.value)}
                                         placeholder="Type a message..."
                                         className="flex-1 px-4 py-2 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-[var(--hotpink)] focus:border-transparent"
+                                        disabled={activeTicket && activeTicket.status === 'resolved'}
+                                        style={activeTicket && activeTicket.status === 'resolved' ? { backgroundColor: '#f3f4f6', color: '#a1a1aa', cursor: 'not-allowed' } : {}}
                                     />
                                     <button
                                         type="submit"
-                                        className="p-2 bg-[var(--hotpink)] text-white rounded-full hover:bg-[var(--roseberry)] transition-colors"
+                                        className="p-2 bg-[var(--hotpink)] text-white rounded-full hover:bg-[var(--hotpink)] transition-colors"
                                         title="Send Message"
+                                        disabled={activeTicket && activeTicket.status === 'resolved'}
+                                        style={activeTicket && activeTicket.status === 'resolved' ? { backgroundColor: '#e5e7eb', color: '#a1a1aa', cursor: 'not-allowed' } : {}}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

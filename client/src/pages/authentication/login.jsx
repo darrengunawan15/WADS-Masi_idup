@@ -25,14 +25,16 @@ const Login = () => {
         }
 
         if (isSuccess && user) {
-            // Redirect based on user role
-            if (user.role === 'admin') {
-                navigate('/dashboard-admin');
-            } else if (user.role === 'staff') {
-                navigate('/dashboard-staff');
-            } else {
-                navigate('/dashboard-customer'); // Redirect customers to their dashboard
-            }
+            toast.success('Login successful!');
+            setTimeout(() => {
+                if (user.role === 'admin') {
+                    navigate('/dashboard-admin');
+                } else if (user.role === 'staff') {
+                    navigate('/dashboard-staff');
+                } else {
+                    navigate('/dashboard-customer');
+                }
+            }, 800);
         }
 
         dispatch(reset());
