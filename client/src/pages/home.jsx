@@ -99,8 +99,8 @@ class Home extends Component {
             const toggleFAQ = (index) => setActiveIndex(prev => prev === index ? null : index);
 
             const faqs = [
-                { question: "What is our return policy?", answer: "We offer a 30-day return policy for unused products. Please ensure that the items are in original condition." },
-                { question: "How do I track my order?", answer: "You can track your order by visiting the \"Track Order\" section on our website." },
+                { question: "What is our return policy?", answer: "We offer a 6 hours return policy for unused products. Please ensure that the items are in original condition." },
+                { question: "How do I track my order?", answer: "You can track your order by asking it through WhatsApp." },
                 { question: "Can I cancel my order?", answer: "Yes, orders can be canceled within 12 hours of purchase." },
                 { question: "Do you offer international shipping?", answer: "Currently, we only ship within the country." }
             ];
