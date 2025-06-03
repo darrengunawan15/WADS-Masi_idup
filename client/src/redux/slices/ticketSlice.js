@@ -239,6 +239,12 @@ export const ticketSlice = createSlice({
   initialState,
   reducers: {
     reset: (state) => initialState, // Reset state to initial state
+    resetFlags: (state) => {
+      state.isLoading = false;
+      state.isError = false;
+      state.isSuccess = false;
+      state.message = '';
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -377,7 +383,7 @@ export const ticketSlice = createSlice({
   },
 });
 
-export const { reset } = ticketSlice.actions;
+export const { reset, resetFlags } = ticketSlice.actions;
 
 // Export all async thunks and other necessary actions individually
 export { };

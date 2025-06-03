@@ -246,9 +246,10 @@ const AssignTickets = () => {
                                             <td className="px-3 py-2 text-sm truncate">{ticket.createdAt}</td>
                                             <td className="px-3 py-2 text-sm">
                                                 <select
-                                                    className="w-full px-2 py-1 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[var(--hotpink)]"
+                                                    className={`w-full px-2 py-1 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[var(--hotpink)] ${ticket.status === 'resolved' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
                                                     value={tempStaffSelection[ticket._id] || ''}
                                                     onChange={(e) => handleStaffSelect(ticket._id, e.target.value)}
+                                                    disabled={ticket.status === 'resolved'}
                                                 >
                                                     <option value="">Select Staff</option>
                                                     {staffMembers.filter(staff => staff.role === 'staff').map(staff => (

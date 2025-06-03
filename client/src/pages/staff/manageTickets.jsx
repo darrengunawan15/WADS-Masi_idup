@@ -6,6 +6,7 @@ import Spinner from '../../components/Spinner';
 import { format } from 'date-fns';
 import NavbarAdmin from '../../components/navbarAdmin';
 import NavbarStaff from '../../components/navbarStaff';
+import { toast } from 'react-toastify';
 
 const ManageTickets = () => {
     const navigate = useNavigate();
@@ -15,6 +16,17 @@ const ManageTickets = () => {
     const dispatch = useDispatch();
     const { tickets, isLoading, isError, message } = useSelector((state) => state.tickets);
     const { user } = useSelector((state) => state.auth);
+
+    useEffect(() => {
+        if (isError && message) {
+            toast.error(message);
+            dispatch(reset());
+        } else if (!isLoading && !isError && message === '') {
+            // This will catch a successful update if you add direct status update in the future
+            // toast.success('Ticket status updated successfully!');
+            // dispatch(reset());
+        }
+    }, [isLoading, isError, message, dispatch]);
 
     useEffect(() => {
         if (isError) {

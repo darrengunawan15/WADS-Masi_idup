@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { getTicket, addComment, updateTicket, assignTicket, uploadFile, reset } from '../../redux/slices/ticketSlice';
+import { getTicket, addComment, updateTicket, assignTicket, uploadFile, reset, resetFlags } from '../../redux/slices/ticketSlice';
 import { logout } from '../../redux/slices/authSlice';
 import { toast } from 'react-toastify';
 import Spinner from '../../components/Spinner';
@@ -22,6 +22,7 @@ const TicketDetails = () => {
     const [assignedToUserLocal, setAssignedToUserLocal] = useState('');
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [pendingStatus, setPendingStatus] = useState('');
+    const [statusUpdateInProgress, setStatusUpdateInProgress] = useState(false);
 
     useEffect(() => {
         // Check if token exists
@@ -72,6 +73,7 @@ const TicketDetails = () => {
             setShowConfirmModal(true);
         } else {
             setTicketStatusLocal(newStatus);
+            setStatusUpdateInProgress(true);
             dispatch(updateTicket({ 
                 ticketId: ticketId, 
                 updateData: { 
@@ -85,6 +87,7 @@ const TicketDetails = () => {
     const handleConfirmStatus = () => {
         if (pendingStatus === 'resolved') {
             setTicketStatusLocal('resolved');
+            setStatusUpdateInProgress(true);
             dispatch(updateTicket({ 
                 ticketId: ticketId, 
                 updateData: { 
@@ -125,6 +128,20 @@ const TicketDetails = () => {
 
         setNewCommentContent('');
     };
+
+    useEffect(() => {
+        if (statusUpdateInProgress) {
+            if (!isLoading && !isError && message === '') {
+                toast.success('Ticket status updated successfully!');
+                setStatusUpdateInProgress(false);
+                dispatch(resetFlags());
+            } else if (!isLoading && isError && message) {
+                toast.error(message);
+                setStatusUpdateInProgress(false);
+                dispatch(resetFlags());
+            }
+        }
+    }, [isLoading, isError, message, statusUpdateInProgress, dispatch]);
 
     if (isLoading) {
         return <Spinner />;
@@ -320,7 +337,7 @@ const TicketDetails = () => {
                                             onChange={handleAssignedToChange}
                                             placeholder='Enter Staff/Admin User ID'
                                             className='form-input block w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-[var(--hotpink)] focus:border-transparent'
-                                            disabled={user?.role === 'staff'}
+                                            disabled={user?.role === 'staff' || ticket.status === 'resolved'}
                                         />
                                     </div>
 
