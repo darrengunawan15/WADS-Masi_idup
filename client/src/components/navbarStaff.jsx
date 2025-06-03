@@ -45,24 +45,30 @@ const NavbarStaff = () => {
         }
     };
 
-    const textTransitionClass = `transition-all duration-300 ease-in-out whitespace-nowrap ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`;
+    const textTransitionClass = transition-all duration-300 ease-in-out whitespace-nowrap ${isCollapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'};
 
     return (
         <div 
             ref={sidebarRef}
-            className={`h-screen bg-white shadow-lg transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} fixed z-50`}
+            className={h-screen bg-white shadow-lg transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'} fixed z-50}
             onClick={handleSidebarClick}
         >
             <div className="flex flex-col h-full">
                 {/* Logo and Title */}
                 <div className="p-4 flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
+                    <div 
+                        className="flex items-center space-x-3 cursor-pointer"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleLogoClick();
+                        }}
+                    >
                         <img
                             src={logo}
                             alt="Logo"
                             className="h-10 flex-shrink-0"
                         />
-                        <h2 className={`text-[var(--blush)] text-xl font-bold ${textTransitionClass} leading-tight`}>
+                        <h2 className={text-[var(--blush)] text-xl font-bold ${textTransitionClass} leading-tight}>
                             Kitchen<br />Serve+
                         </h2>
                     </div>
